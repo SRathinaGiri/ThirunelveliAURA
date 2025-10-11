@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krishi Mitra - Your Farming Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 18px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #27ae60;
+            border-bottom: 3px solid #27ae60;
+        }
+
+        .content {
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .crop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .crop-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .crop-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-color: #27ae60;
+        }
+
+        .crop-card h3 {
+            color: #27ae60;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 50px;
+            margin-bottom: 20px;
+        }
+
+        .detail-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .detail-section h2 {
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .process-step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .budget-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .budget-table th, .budget-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .budget-table th {
+            background: #27ae60;
+            color: white;
+        }
+
+        .back-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .calc-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .soil-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .soil-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border-top: 4px solid #e67e22;
+        }
+
+        .reminder-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .reminder-card.urgent {
+            border-left-color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+            .crop-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 कृषि मित्र - Krishi Mitra</h1>
+            <p>Your Complete Farming Guide for Success. Developed by ANTONEY WINSON</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('crops')">🌱 All Crops</button>
+            <button class="nav-tab" onclick="showTab('budget')">💰 Budget Calculator</button>
+            <button class="nav-tab" onclick="showTab('soil')">🌍 Soil Guide</button>
+            <button class="nav-tab" onclick="showTab('reminders')">⏰ Daily Reminders</button>
+        </div>
+
+        <div class="content">
+            <div id="crops" class="tab-content active">
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search for crops..." onkeyup="searchCrops()">
+                <div id="cropList" class="crop-grid"></div>
+                <div id="cropDetail" style="display: none;"></div>
+            </div>
+
+            <div id="budget" class="tab-content">
+                <h2 style="color: #27ae60;">💰 Farming Budget Calculator</h2>
+                <div class="calculator">
+                    <div class="input-group">
+                        <label>Select Crop:</label>
+                        <select id="budgetCrop">
+                            <option value="">Choose a crop...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Land Area (Square Meters):</label>
+                        <input type="number" id="landArea" placeholder="Enter area" min="1">
+                    </div>
+                    <button class="calc-btn" onclick="calculateBudget()">Calculate Budget</button>
+                    <div id="budgetResult"></div>
+                </div>
+            </div>
+
+            <div id="soil" class="tab-content">
+                <h2 style="color: #27ae60;">🌍 Soil Type Guide</h2>
+                <div class="soil-guide" id="soilGuide"></div>
+            </div>
+
+            <div id="reminders" class="tab-content">
+                <h2 style="color: #27ae60;">⏰ Your Daily Farming Reminders</h2>
+                <div id="reminderList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var crops = [
+            {
+                name: "Rice",
+                hindi: "धान",
+                season: "Kharif",
+                duration: "120-150 days",
+                soil: "Clayey loam soil",
+                steps: [
+                    "Plough field 2-3 times and flood with water",
+                    "Choose varieties like Basmati, IR-36",
+                    "Sow seeds in nursery beds",
+                    "Transplant after 25-30 days",
+                    "Maintain 5-10 cm standing water",
+                    "Apply NPK fertilizer 120:60:60 kg/hectare",
+                    "Remove weeds within 20 days",
+                    "Watch for pests, apply neem oil",
+                    "Harvest when 80% grains turn golden"
+                ],
+                budget: {seeds: 0.5, fertilizer: 2, pesticides: 1, labor: 3, irrigation: 1.5, total: 8},
+                reminders: [
+                    {day: 1, task: "Prepare land and nursery beds", urgent: true},
+                    {day: 25, task: "Transplant rice seedlings", urgent: true},
+                    {day: 40, task: "First weeding and fertilizer"},
+                    {day: 60, task: "Check for pests"},
+                    {day: 120, task: "Prepare for harvesting", urgent: true}
+                ]
+            },
+            {
+                name: "Wheat",
+                hindi: "गेहूं",
+                season: "Rabi",
+                duration: "120-130 days",
+                soil: "Well-drained loamy soil",
+                steps: [
+                    "Deep ploughing followed by harrowing",
+                    "Use certified seeds like HD-2967",
+                    "Treat seeds with fungicide",
+                    "Sow at 5 cm depth, 20 cm spacing",
+                    "First irrigation after 20-25 days",
+                    "Apply 120:60:40 NPK kg/hectare",
+                    "Apply herbicide within 30 days",
+                    "Watch for rust diseases",
+                    "Harvest when moisture is 20-25%"
+                ],
+                budget: {seeds: 0.4, fertilizer: 1.8, pesticides: 0.8, labor: 2.5, irrigation: 1, total: 6.5},
+                reminders: [
+                    {day: 1, task: "Start sowing wheat", urgent: true},
+                    {day: 20, task: "First irrigation - Crown Root stage", urgent: true},
+                    {day: 45, task: "Second irrigation and weed control"},
+                    {day: 80, task: "Irrigation during flowering", urgent: true},
+                    {day: 120, task: "Check moisture and harvest", urgent: true}
+                ]
+            },
+            {
+                name: "Cotton",
+                hindi: "कपास",
+                season: "Kharif",
+                duration: "150-180 days",
+                soil: "Black cotton soil",
+                steps: [
+                    "Deep ploughing in summer",
+                    "Treat seeds with fungicide",
+                    "Sow 2-3 seeds at 3-4 cm depth",
+                    "Keep one healthy plant per hill",
+                    "First irrigation 3-4 weeks after sowing",
+                    "Apply 100:50:50 NPK kg/hectare",
+                    "Watch for bollworms, use Bt spray",
+                    "Remove unwanted branches",
+                    "Pick cotton when bolls open fully"
+                ],
+                budget: {seeds: 0.6, fertilizer: 2.5, pesticides: 2, labor: 4, irrigation: 1.5, total: 10.6},
+                reminders: [
+                    {day: 1, task: "Sow cotton seeds", urgent: true},
+                    {day: 15, task: "Thin plants to one per spot"},
+                    {day: 60, task: "Monitor for bollworm", urgent: true},
+                    {day: 150, task: "Start first cotton picking", urgent: true}
+                ]
+            },
+            {
+                name: "Maize",
+                hindi: "मक्का",
+                season: "Kharif & Rabi",
+                duration: "80-110 days",
+                soil: "Well-drained loamy soil",
+                steps: [
+                    "Plough and harrow for fine tilth",
+                    "Choose hybrids like NK-6240",
+                    "Sow 2 seeds at 5 cm depth",
+                    "Thin to one plant after 15 days",
+                    "First irrigation at 15-20 days",
+                    "Apply 120:60:40 NPK kg/hectare",
+                    "First weeding at 20-25 days",
+                    "Watch for stem borers",
+                    "Harvest when kernels are hard"
+                ],
+                budget: {seeds: 0.7, fertilizer: 2, pesticides: 1, labor: 2.8, irrigation: 1.2, total: 7.7},
+                reminders: [
+                    {day: 1, task: "Sow maize seeds", urgent: true},
+                    {day: 15, task: "Thin plants and irrigate"},
+                    {day: 45, task: "Fertilizer before tasseling", urgent: true},
+                    {day: 90, task: "Monitor for harvest", urgent: true}
+                ]
+            },
+            {
+                name: "Chickpea",
+                hindi: "चना",
+                season: "Rabi",
+                duration: "100-120 days",
+                soil: "Loamy to clay loam",
+                steps: [
+                    "Deep ploughing and harrowing",
+                    "Use varieties like Pusa-256",
+                    "Treat with Rhizobium culture",
+                    "Sow at 5-7 cm depth",
+                    "First irrigation at flowering",
+                    "Apply 20:40:20 NPK kg/hectare",
+                    "Hand weeding at 30 days",
+                    "Watch for pod borer",
+                    "Harvest when pods turn brown"
+                ],
+                budget: {seeds: 0.8, fertilizer: 1.2, pesticides: 0.8, labor: 2, irrigation: 0.8, total: 5.6},
+                reminders: [
+                    {day: 1, task: "Sow chickpea seeds", urgent: true},
+                    {day: 45, task: "Irrigation at flowering", urgent: true},
+                    {day: 110, task: "Prepare for harvest", urgent: true}
+                ]
+            },
+            {
+                name: "Tomato",
+                hindi: "टमाटर",
+                season: "Year-round",
+                duration: "90-120 days",
+                soil: "Sandy loam with organic matter",
+                steps: [
+                    "Sow seeds in nursery beds",
+                    "Transplant after 4-5 weeks",
+                    "Provide bamboo stakes for support",
+                    "Regular light irrigation",
+                    "Apply 150:75:100 NPK kg/hectare",
+                    "Apply organic mulch",
+                    "Remove side shoots",
+                    "Watch for fruit borers",
+                    "Pick when fully colored but firm"
+                ],
+                budget: {seeds: 1, fertilizer: 3, pesticides: 2, labor: 4, irrigation: 2, total: 12},
+                reminders: [
+                    {day: 1, task: "Sow tomato seeds", urgent: true},
+                    {day: 35, task: "Transplant seedlings", urgent: true},
+                    {day: 65, task: "Prune and check pests"},
+                    {day: 95, task: "Start harvesting", urgent: true}
+                ]
+            },
+            {
+                name: "Potato",
+                hindi: "आलू",
+                season: "Rabi",
+                duration: "90-120 days",
+                soil: "Sandy loam",
+                steps: [
+                    "Deep ploughing with ridges",
+                    "Use disease-free tubers 30-40g",
+                    "Sprout tubers before planting",
+                    "Plant 5-7 cm deep on ridges",
+                    "Earth up after 25-30 days",
+                    "Apply 150:100:100 NPK kg/hectare",
+                    "Regular irrigation",
+                    "Watch for late blight",
+                    "Harvest when leaves die"
+                ],
+                budget: {seeds: 2.5, fertilizer: 2.5, pesticides: 1.5, labor: 3.5, irrigation: 1.5, total: 11.5},
+                reminders: [
+                    {day: 1, task: "Plant potato tubers", urgent: true},
+                    {day: 28, task: "Earth up operation", urgent: true},
+                    {day: 60, task: "Critical irrigation", urgent: true},
+                    {day: 100, task: "Prepare for harvest", urgent: true}
+                ]
+            },
+            {
+                name: "Onion",
+                hindi: "प्याज",
+                season: "Rabi & Kharif",
+                duration: "120-150 days",
+                soil: "Fertile loamy soil",
+                steps: [
+                    "Sow seeds in raised beds",
+                    "Transplant pencil-thick seedlings",
+                    "Light frequent irrigation",
+                    "Apply 100:50:50 NPK kg/hectare",
+                    "Regular weeding for 45 days",
+                    "Mulch between rows",
+                    "Monitor for thrips",
+                    "Stop irrigation 10 days before harvest",
+                    "Harvest when tops fall over"
+                ],
+                budget: {seeds: 0.5, fertilizer: 2.2, pesticides: 1.2, labor: 3.8, irrigation: 1.5, total: 9.2},
+                reminders: [
+                    {day: 1, task: "Sow onion seeds", urgent: true},
+                    {day: 50, task: "Transplant seedlings", urgent: true},
+                    {day: 140, task: "Stop irrigation", urgent: true},
+                    {day: 150, task: "Harvest onions", urgent: true}
+                ]
+            }
+        ];
+
+        var soilTypes = [
+            {
+                name: "Alluvial Soil",
+                description: "Most fertile soil found in river valleys",
+                crops: "Rice, Wheat, Sugarcane, Cotton, Maize",
+                region: "Ganga-Brahmaputra plains, Coastal areas"
+            },
+            {
+                name: "Black Soil",
+                description: "Rich in iron, lime, and clay - holds moisture well",
+                crops: "Cotton, Wheat, Jowar, Linseed, Tobacco",
+                region: "Maharashtra, Gujarat, Madhya Pradesh"
+            },
+            {
+                name: "Red Soil",
+                description: "Rich in iron, porous and friable",
+                crops: "Groundnut, Millets, Tobacco, Cotton",
+                region: "Tamil Nadu, Karnataka, Andhra Pradesh"
+            },
+            {
+                name: "Laterite Soil",
+                description: "High in iron and aluminum, acidic",
+                crops: "Tea, Coffee, Cashew, Rubber",
+                region: "Kerala, Karnataka, Tamil Nadu hills"
+            },
+            {
+                name: "Desert Soil",
+                description: "Sandy, low in moisture and organic matter",
+                crops: "Bajra, Pulses, Barley with irrigation",
+                region: "Rajasthan, Gujarat, Haryana"
+            },
+            {
+                name: "Mountain Soil",
+                description: "Varies with altitude, good for horticulture",
+                crops: "Fruits, Tea, Coffee, Spices",
+                region: "Himalayan regions, Western Ghats"
+            }
+        ];
+
+        var currentCrop = null;
+
+        function init() {
+            displayCrops();
+            populateBudgetDropdown();
+            displaySoilGuide();
+            displayReminders();
+        }
+
+        function showTab(tabName) {
+            var tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            
+            var buttons = document.querySelectorAll('.nav-tab');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function displayCrops() {
+            var html = '';
+            for (var i = 0; i < crops.length; i++) {
+                html += '<div class="crop-card" onclick="showCropDetail(' + i + ')">';
+                html += '<h3>' + crops[i].name + ' (' + crops[i].hindi + ')</h3>';
+                html += '<p>Season: ' + crops[i].season + '</p>';
+                html += '<p>Duration: ' + crops[i].duration + '</p>';
+                html += '</div>';
+            }
+            document.getElementById('cropList').innerHTML = html;
+        }
+
+        function searchCrops() {
+            var input = document.getElementById('searchBox').value.toLowerCase();
+            var cards = document.querySelectorAll('.crop-card');
+            
+            cards.forEach(function(card) {
+                var text = card.textContent.toLowerCase();
+                if (text.indexOf(input) > -1) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function showCropDetail(index) {
+            currentCrop = crops[index];
+            var crop = crops[index];
+            
+            var html = '<button class="back-btn" onclick="backToCrops()">← Back to All Crops</button>';
+            html += '<div class="detail-section">';
+            html += '<h2>' + crop.name + ' (' + crop.hindi + ') - Complete Guide</h2>';
+            html += '<p><strong>Season:</strong> ' + crop.season + '</p>';
+            html += '<p><strong>Duration:</strong> ' + crop.duration + '</p>';
+            html += '<p><strong>Suitable Soil:</strong> ' + crop.soil + '</p>';
+            
+            html += '<h3>Step-by-Step Cultivation Process:</h3>';
+            for (var i = 0; i < crop.steps.length; i++) {
+                html += '<div class="process-step">';
+                html += '<strong>Step ' + (i + 1) + ':</strong> ' + crop.steps[i];
+                html += '</div>';
+            }
+            
+            html += '<h3>Budget Breakdown (Per Square Meter):</h3>';
+            html += '<table class="budget-table">';
+            html += '<tr><th>Item</th><th>Cost (₹)</th></tr>';
+            html += '<tr><td>Seeds</td><td>₹' + crop.budget.seeds + '</td></tr>';
+            html += '<tr><td>Fertilizer</td><td>₹' + crop.budget.fertilizer + '</td></tr>';
+            html += '<tr><td>Pesticides</td><td>₹' + crop.budget.pesticides + '</td></tr>';
+            html += '<tr><td>Labor</td><td>₹' + crop.budget.labor + '</td></tr>';
+            html += '<tr><td>Irrigation</td><td>₹' + crop.budget.irrigation + '</td></tr>';
+            html += '<tr><th>Total</th><th>₹' + crop.budget.total + '</th></tr>';
+            html += '</table>';
+            
+            html += '<h3>Daily Reminders & Tasks:</h3>';
+            for (var i = 0; i < crop.reminders.length; i++) {
+                var r = crop.reminders[i];
+                html += '<div class="reminder-card' + (r.urgent ? ' urgent' : '') + '">';
+                html += '<h4>Day ' + r.day + (r.urgent ? ' ⚠️ IMPORTANT' : '') + '</h4>';
+                html += '<p>' + r.task + '</p>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            document.getElementById('cropList').style.display = 'none';
+            document.getElementById('searchBox').style.display = 'none';
+            document.getElementById('cropDetail').style.display = 'block';
+            document.getElementById('cropDetail').innerHTML = html;
+        }
+
+        function backToCrops() {
+            document.getElementById('cropList').style.display = 'grid';
+            document.getElementById('searchBox').style.display = 'block';
+            document.getElementById('cropDetail').style.display = 'none';
+        }
+
+        function populateBudgetDropdown() {
+            var select = document.getElementById('budgetCrop');
+            for (var i = 0; i < crops.length; i++) {
+                var option = document.createElement('option');
+                option.value = i;
+                option.text = crops[i].name + ' (' + crops[i].hindi + ')';
+                select.appendChild(option);
+            }
+        }
+
+        function calculateBudget() {
+            var cropIndex = document.getElementById('budgetCrop').value;
+            var area = document.getElementById('landArea').value;
+            
+            if (!cropIndex || !area || area <= 0) {
+                alert('Please select a crop and enter valid land area!');
+                return;
+            }
+            
+            var crop = crops[cropIndex];
+            var totalCost = crop.budget.total * area;
+            
+            var html = '<div class="result-box">';
+            html += '<h3>Total Budget Required</h3>';
+            html += '<h2 style="font-size: 3em; margin: 20px 0;">₹' + totalCost.toFixed(2) + '</h2>';
+            html += '<p>For ' + area + ' square meters of ' + crop.name + '</p>';
+            html += '<hr style="margin: 20px 0; border: 1px solid rgba(255,255,255,0.3);">';
+            html += '<h4>Detailed Breakdown:</h4>';
+            html += '<p>Seeds: ₹' + (crop.budget.seeds * area).toFixed(2) + '</p>';
+            html += '<p>Fertilizer: ₹' + (crop.budget.fertilizer * area).toFixed(2) + '</p>';
+            html += '<p>Pesticides: ₹' + (crop.budget.pesticides * area).toFixed(2) + '</p>';
+            html += '<p>Labor: ₹' + (crop.budget.labor * area).toFixed(2) + '</p>';
+            html += '<p>Irrigation: ₹' + (crop.budget.irrigation * area).toFixed(2) + '</p>';
+            html += '</div>';
+            
+            document.getElementById('budgetResult').innerHTML = html;
+        }
+
+        function displaySoilGuide() {
+            var html = '';
+            for (var i = 0; i < soilTypes.length; i++) {
+                var soil = soilTypes[i];
+                html += '<div class="soil-card">';
+                html += '<h3>🌱 ' + soil.name + '</h3>';
+                html += '<p><strong>Description:</strong> ' + soil.description + '</p>';
+                html += '<p><strong>Best Crops:</strong> ' + soil.crops + '</p>';
+                html += '<p><strong>Found in:</strong> ' + soil.region + '</p>';
+                html += '</div>';
+            }
+            document.getElementById('soilGuide').innerHTML = html;
+        }
+
+        function displayReminders() {
+            var html = '<div style="background: #e3f2fd; padding: 20px; border-radius: 15px; margin-bottom: 20px;">';
+            html += '<h3>📱 How to Use Daily Reminders:</h3>';
+            html += '<p>1. Select a crop from "All Crops" tab to see its complete schedule</p>';
+            html += '<p>2. Each crop has day-wise tasks marked as regular or IMPORTANT</p>';
+            html += '<p>3. Follow the timeline for best results</p>';
+            html += '<p>4. Bookmark this page and check daily!</p>';
+            html += '</div>';
+            
+            if (currentCrop) {
+                html += '<h3>Reminders for ' + currentCrop.name + ':</h3>';
+                for (var i = 0; i < currentCrop.reminders.length; i++) {
+                    var r = currentCrop.reminders[i];
+                    html += '<div class="reminder-card' + (r.urgent ? ' urgent' : '') + '">';
+                    html += '<h4>Day ' + r.day + (r.urgent ? ' ⚠️ IMPORTANT' : '') + '</h4>';
+                    html += '<p>' + r.task + '</p>';
+                    html += '</div>';
+                }
+            } else {
+                html += '<p style="text-align: center; color: #666; padding: 40px;">Please select a crop from the "All Crops" tab to see reminders</p>';
+            }
+            
+            document.getElementById('reminderList').innerHTML = html;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
