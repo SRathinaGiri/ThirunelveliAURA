@@ -1,0 +1,9 @@
+I am a CA STUDENT and i donot know anything about coding and i want to create a web based application for farmers in india . the application should be formed using (html + js + css ),give it to me in a single file format . 
+following things need to be in that app 
+1.all types of crop in india
+2.what are the procesess to cultivate that crop 
+3. a daily reminder and follow up on that crop , it should act as a personal guide for beginner farmer 
+4. what is budget needed to cultivate the crop in a specific square metre including fertilizer 
+5. what kind of product will be suitable for that soil
+ make an app and it should  act as a beginner friendly guide to a person who don't even know anything about farming and a daily reminder and follow up should also be made by the app 
+ now please create the code in a single file format , it will be helpful for every farmer in india and a person who wants to do farming , do it with extra care and love
