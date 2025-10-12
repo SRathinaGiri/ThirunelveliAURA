@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Due Date Tracker</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons (for professional icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ca-primary': '#0d9488', /* Teal 700 */
+                        'ca-secondary': '#14b8a6', /* Teal 500 */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen">
+
+<div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <header class="text-center py-6 mb-8 bg-white shadow-lg rounded-xl">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-ca-primary flex items-center justify-center">
+            <i data-lucide="calendar-check" class="w-8 h-8 mr-3"></i>
+            Compliance Due Date Assistant
+        </h1>
+        <p class="text-lg text-slate-500 mt-2">Track & manage critical statutory deadlines.</p>
+    </header>
+
+    <!-- User & Auth Status -->
+    <div class="bg-slate-100 p-4 rounded-lg shadow-inner mb-6 text-sm text-slate-600">
+        <p id="auth-status" class="font-medium text-center"></p>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="bg-white p-4 rounded-lg shadow-md mb-8">
+        <h2 class="text-xl font-semibold text-slate-700 mb-4">Filter Dates</h2>
+        <!-- Adjusted grid for responsive filters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            
+            <!-- Filter by Month -->
+            <div>
+                <label for="month-select" class="block text-sm font-medium text-slate-700 mb-1">Select Month:</label>
+                <select id="month-select" onchange="applyFilters()" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-ca-primary focus:border-ca-primary transition duration-150">
+                    <option value="">All Upcoming</option>
+                </select>
+            </div>
+            
+            <!-- Filter by Type -->
+            <div>
+                <label for="type-select" class="block text-sm font-medium text-slate-700 mb-1">Compliance Type:</label>
+                <select id="type-select" onchange="applyFilters()" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-ca-primary focus:border-ca-primary transition duration-150">
+                    <option value="">All Types</option>
+                    <option value="Income Tax">Income Tax</option>
+                    <option value="GST">GST</option>
+                    <option value="ROC">ROC / Company Law</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <!-- Toggle for Show Completed Tasks -->
+            <div class="flex flex-col col-span-1 sm:col-span-2 lg:col-span-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Show Completed Tasks:</label>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" id="show-completed-toggle" onchange="applyFilters()" class="hidden peer">
+                    <label for="show-completed-toggle" class="relative inline-flex items-center cursor-pointer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-ca-primary/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ca-primary"></div>
+                        <span id="toggle-label" class="ms-3 text-sm font-medium text-slate-700 select-none">No (Hide)</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- The old "Due Soon Highlight" button has been removed. -->
+        </div>
+    </div>
+
+    <!-- NEW: Reminder Banner Container -->
+    <div id="reminder-banner" class="mb-4">
+        <!-- Banner content rendered by JavaScript -->
+    </div>
+    
+    <!-- Due Dates List -->
+    <div id="due-dates-container" class="space-y-4">
+        <div id="loading-indicator" class="text-center p-8 text-slate-500">
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-ca-primary"></i>
+            <p class="mt-2">Loading data and connecting to Firestore...</p>
+        </div>
+    </div>
+    
+    <!-- Footer Credit -->
+    <footer class="text-center mt-12 pt-4 border-t border-slate-200 text-sm text-slate-500">
+        <p class="font-semibold">Developed by Sri Dharani</p>
+    </footer>
+</div>
+
+<!-- Firebase & Application Script -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, query, where, orderBy, updateDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Set Firebase log level for debugging
+    setLogLevel('debug');
+
+    // --- Global Variables (Provided by Canvas Environment) ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ca-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* mock config for local testing */ };
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // --- App State ---
+    let db, auth;
+    let currentUserId = null;
+    let isAuthReady = false;
+    let completionStatus = {}; // { 'dt1': true, 'dt2': false, ... }
+
+    // --- Mock Due Dates (Replace with real-time API or more detailed data if needed) ---
+    // IMPORTANT: Dates should be in YYYY-MM-DD format for easy sorting and comparison.
+    const statutoryDates = [
+        { id: 'dt1', date: '2025-10-31', description: 'GSTR-3B monthly return (Sep 2025)', type: 'GST', compliance_day: 31 },
+        { id: 'dt2', date: '2025-11-07', description: 'TDS/TCS Deposit (Oct 2025)', type: 'Income Tax', compliance_day: 7 },
+        { id: 'dt3', date: '2025-11-15', description: 'PF Deposit/Challan Payment (Oct 2025)', type: 'Other', compliance_day: 15 },
+        { id: 'dt4', date: '2025-11-20', description: 'GSTR-1 monthly return (Oct 2025)', type: 'GST', compliance_day: 20 },
+        { id: 'dt5', date: '2025-11-30', description: 'Income Tax Audit Report Submission', type: 'Income Tax', compliance_day: 30 },
+        { id: 'dt6', date: '2025-12-31', description: 'Company Annual Return (AOC-4, MGT-7)', type: 'ROC', compliance_day: 31 },
+        { id: 'dt7', date: '2025-12-07', description: 'TDS/TCS Deposit (Nov 2025)', type: 'Income Tax', compliance_day: 7 },
+        { id: 'dt8', date: '2025-12-10', description: 'TDS Certificate issue for rent/sale of property', type: 'Income Tax', compliance_day: 10 },
+        { id: 'dt9', date: '2025-12-20', description: 'GSTR-3B monthly return (Nov 2025)', type: 'GST', compliance_day: 20 },
+        { id: 'dt10', date: '2026-01-31', description: 'PF half-yearly return filing', type: 'Other', compliance_day: 31 },
+    ];
+
+    // --- Utility Functions ---
+
+    /**
+     * Converts a YYYY-MM-DD date string to a readable format (e.g., Nov 30, 2025).
+     * @param {string} dateString 
+     * @returns {string}
+     */
+    function formatDueDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    /**
+     * Filters out dates that have already passed, only showing upcoming and current month dates.
+     * @param {Array<Object>} dates 
+     * @returns {Array<Object>}
+     */
+    function filterUpcomingDates(dates) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day
+
+        return dates.filter(dateItem => {
+            const dueDate = new Date(dateItem.date);
+            // Include dates on or after today
+            return dueDate >= today;
+        }).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    
+    /**
+     * Checks if a date item is due within the next 7 days (and is uncompleted).
+     * @param {Object} dateItem 
+     * @returns {boolean}
+     */
+    function isDueSoon(dateItem) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const sevenDaysLater = new Date();
+        sevenDaysLater.setDate(today.getDate() + 7);
+
+        const dueDate = new Date(dateItem.date);
+        
+        return dueDate >= today && dueDate <= sevenDaysLater;
+    }
+
+    /**
+     * Gets the Firestore collection reference for the user's compliance status.
+     * @param {import('firebase/firestore').Firestore} firestoreDb
+     * @param {string} userId
+     * @returns {import('firebase/firestore').CollectionReference}
+     */
+    const getCompletionRef = (firestoreDb, userId) => {
+        return collection(firestoreDb, `artifacts/${appId}/users/${userId}/due_date_completions`);
+    };
+
+    // --- Firebase and Data Functions ---
+
+    async function initFirebase() {
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Authentication with custom token or anonymous sign-in
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+                console.log("Signed in with custom token.");
+            } else {
+                await signInAnonymously(auth);
+                console.log("Signed in anonymously.");
+            }
+
+            // Listen for auth state changes
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    document.getElementById('auth-status').textContent = `User ID: ${currentUserId} | Data is saved to your private cloud storage.`;
+                    isAuthReady = true;
+                    // Start listening for completion status only after auth is ready
+                    listenForCompletionStatus();
+                } else {
+                    currentUserId = null;
+                    document.getElementById('auth-status').textContent = 'Authenticating...';
+                    isAuthReady = false;
+                }
+            });
+
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error connecting to database. Please check console.</p>';
+        }
+    }
+
+    /**
+     * Listens for real-time updates on the user's completion status.
+     */
+    function listenForCompletionStatus() {
+        if (!db || !currentUserId) return;
+
+        const q = getCompletionRef(db, currentUserId);
+        
+        // Listen for real-time changes
+        onSnapshot(q, (snapshot) => {
+            const newStatus = {};
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                newStatus[doc.id] = data.isCompleted;
+            });
+            completionStatus = newStatus;
+            console.log("Updated completion status:", completionStatus);
+            // Re-render the dates to reflect the updated status immediately
+            applyFilters(); 
+        }, (error) => {
+            console.error("Error listening to completion status:", error);
+        });
+    }
+
+    /**
+     * Toggles the completion status of a due date and updates Firestore.
+     * @param {string} dateId 
+     * @param {boolean} isCompleted 
+     */
+    async function toggleCompletionStatus(dateId, isCompleted) {
+        if (!db || !currentUserId) {
+            console.error("Database or User not ready.");
+            return;
+        }
+
+        const dateDocRef = doc(getCompletionRef(db, currentUserId), dateId);
+        
+        try {
+            await setDoc(dateDocRef, {
+                isCompleted: isCompleted,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+
+            console.log(`Task ${dateId} updated to ${isCompleted}`);
+
+        } catch (error) {
+            console.error("Error setting completion status:", error);
+        }
+    }
+
+    // --- UI Rendering Functions ---
+
+    /**
+     * Renders a single due date card.
+     * @param {Object} dateItem 
+     * @returns {string} HTML string
+     */
+    function renderDateCard(dateItem) {
+        const isCompleted = completionStatus[dateItem.id] === true;
+        // Check if the task is urgent (due soon and not completed)
+        const isUrgent = !isCompleted && isDueSoon(dateItem);
+        
+        const buttonClass = isCompleted ? 'bg-ca-secondary hover:bg-teal-700' : 'bg-slate-300 hover:bg-slate-400';
+        
+        let cardClass = isCompleted 
+            ? 'opacity-70 border-ca-secondary' 
+            : 'border-slate-300';
+            
+        if (isUrgent) {
+            // Apply distinct visual highlight for urgent tasks
+            cardClass = 'border-red-500 ring-2 ring-red-300 transform scale-[1.01] shadow-xl';
+        }
+        
+        return `
+            <div id="card-${dateItem.id}" class="due-date-card flex items-center bg-white p-4 sm:p-6 rounded-xl shadow-lg border-l-4 ${cardClass} transition-all duration-300">
+                
+                <!-- Date Section -->
+                <div class="flex-shrink-0 text-center w-16 mr-4 sm:mr-6">
+                    <p class="text-sm font-semibold text-slate-500">${new Date(dateItem.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}</p>
+                    <p class="text-3xl font-bold text-slate-800">${dateItem.compliance_day}</p>
+                </div>
+
+                <!-- Description/Details Section -->
+                <div class="flex-grow min-w-0">
+                    <p class="text-xs font-semibold uppercase ${isUrgent ? 'text-red-500' : 'text-ca-primary'}">${dateItem.type} ${isUrgent ? ' (URGENT)' : ''}</p>
+                    <p class="text-lg font-medium text-slate-900 truncate">${dateItem.description}</p>
+                    <p class="text-sm text-slate-500 mt-0.5">Deadline: ${formatDueDate(dateItem.date)}</p>
+                </div>
+
+                <!-- Action Button -->
+                <div class="ml-4 flex-shrink-0">
+                    <button 
+                        data-id="${dateItem.id}"
+                        data-completed="${isCompleted}"
+                        onclick="handleToggleCompletion(this)"
+                        class="p-3 rounded-full text-white transition-colors duration-200 ${buttonClass} shadow-md"
+                        title="${isCompleted ? 'Mark as Pending' : 'Mark as Completed'}"
+                    >
+                        <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Identifies uncompleted tasks due within the next 7 days.
+     * @returns {Array<Object>}
+     */
+    function getDueSoonTasks() {
+        return filterUpcomingDates(statutoryDates).filter(dateItem => {
+            const isUncompleted = completionStatus[dateItem.id] !== true;
+            return isUncompleted && isDueSoon(dateItem);
+        });
+    }
+
+    /**
+     * Renders a proactive reminder banner based on due soon tasks.
+     * @param {Array<Object>} dueSoonTasks 
+     */
+    function renderReminderBanner(dueSoonTasks) {
+        const bannerContainer = document.getElementById('reminder-banner');
+        const count = dueSoonTasks.length;
+
+        if (count > 0) {
+            const message = count === 1 
+                ? '1 uncompleted compliance task is due within the next 7 days! Act fast.'
+                : `${count} uncompleted compliance tasks are due within the next 7 days! Act fast.`;
+
+            bannerContainer.innerHTML = `
+                <div role="alert" class="flex items-center justify-between p-4 bg-red-100 border-l-4 border-red-500 text-red-800 rounded-xl shadow-lg animate-pulse-once">
+                    <div class="flex items-center">
+                        <i data-lucide="alert-octagon" class="w-6 h-6 mr-3 text-red-500 flex-shrink-0"></i>
+                        <p class="font-bold text-sm sm:text-base">${message}</p>
+                    </div>
+                </div>
+            `;
+            // Ensure Lucide icons are re-rendered for the banner
+            lucide.createIcons(); 
+        } else {
+            bannerContainer.innerHTML = ''; // Clear banner if no due-soon tasks
+        }
+    }
+
+
+    /**
+     * Main function to filter, sort, and render the dates.
+     */
+    window.applyFilters = function() {
+        const container = document.getElementById('due-dates-container');
+        const monthFilter = document.getElementById('month-select').value;
+        const typeFilter = document.getElementById('type-select').value;
+        
+        // Handle 'Show Completed' toggle state
+        const showCompletedToggle = document.getElementById('show-completed-toggle');
+        const showCompleted = showCompletedToggle.checked;
+        document.getElementById('toggle-label').textContent = showCompleted ? 'Yes (Show)' : 'No (Hide)';
+        
+        container.innerHTML = ''; // Clear previous content
+
+        let filteredDates = filterUpcomingDates(statutoryDates);
+
+        // Apply Month Filter
+        if (monthFilter) {
+            filteredDates = filteredDates.filter(dateItem => {
+                const date = new Date(dateItem.date);
+                return `${date.getMonth() + 1}/${date.getFullYear()}` === monthFilter;
+            });
+        }
+
+        // Apply Type Filter
+        if (typeFilter) {
+            filteredDates = filteredDates.filter(dateItem => dateItem.type === typeFilter);
+        }
+        
+        // Filter Completed Status
+        if (!showCompleted) {
+            filteredDates = filteredDates.filter(dateItem => completionStatus[dateItem.id] !== true);
+        }
+        
+        // RENDER LOGIC:
+        
+        // 1. Render Proactive Reminder Banner (before the main list)
+        const dueSoonTasks = getDueSoonTasks();
+        renderReminderBanner(dueSoonTasks);
+
+
+        // 2. Render Due Date List
+        if (filteredDates.length === 0) {
+            container.innerHTML = '<div class="text-center p-8 text-slate-500 bg-white rounded-xl shadow-md"><i data-lucide="inbox" class="w-10 h-10 mx-auto text-ca-primary mb-3"></i><p class="text-lg font-medium">No due dates match the current filters!</p></div>';
+        } else {
+            const html = filteredDates.map(renderDateCard).join('');
+            container.innerHTML = html;
+        }
+
+        // Re-render lucide icons
+        lucide.createIcons();
+    }
+
+    /**
+     * Populates the month filter dropdown with upcoming months.
+     */
+    function populateMonthFilter() {
+        const select = document.getElementById('month-select');
+        const upcomingDates = filterUpcomingDates(statutoryDates);
+        const uniqueMonths = new Set();
+        
+        upcomingDates.forEach(dateItem => {
+            const date = new Date(dateItem.date);
+            const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`; // e.g., "10/2025"
+            const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            uniqueMonths.add(JSON.stringify({ value: monthYear, name: monthName }));
+        });
+
+        // Add options to the select dropdown
+        uniqueMonths.forEach(jsonString => {
+            const monthData = JSON.parse(jsonString);
+            const option = document.createElement('option');
+            option.value = monthData.value;
+            option.textContent = monthData.name;
+            select.appendChild(option);
+        });
+    }
+
+    /**
+     * Handles the click event for the completion button.
+     * @param {HTMLButtonElement} button 
+     */
+    window.handleToggleCompletion = function(button) {
+        const dateId = button.getAttribute('data-id');
+        const isCompleted = button.getAttribute('data-completed') === 'true';
+        
+        // Toggle the status
+        const newStatus = !isCompleted;
+        toggleCompletionStatus(dateId, newStatus);
+    }
+    
+    // The manual highlightDueSoon and alertMessage functions are now redundant and removed.
+    // We can still use the basic alertMessage structure for future internal messages if needed.
+    
+    /**
+     * Simple Alert Message Box (instead of alert())
+     * @param {string} message 
+     * @param {string} colorClass 
+     */
+    function alertMessage(message, colorClass = 'bg-ca-primary') {
+        let alertBox = document.getElementById('custom-alert');
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'custom-alert';
+            alertBox.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-xl shadow-xl text-white font-semibold z-50 transition-all duration-300 opacity-0';
+            document.body.appendChild(alertBox);
+        }
+
+        alertBox.className = `fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-xl shadow-xl text-white font-semibold z-50 transition-all duration-300 ${colorClass}`;
+        alertBox.textContent = message;
+        
+        // Show the alert
+        setTimeout(() => {
+            alertBox.classList.remove('opacity-0');
+            alertBox.classList.add('opacity-100');
+        }, 50);
+
+        // Hide the alert after 3 seconds
+        setTimeout(() => {
+            alertBox.classList.remove('opacity-100');
+            alertBox.classList.add('opacity-0');
+        }, 3000);
+    }
+
+    // --- Initialization on Load ---
+    window.onload = () => {
+        // Initial setup
+        populateMonthFilter();
+        
+        // Start Firebase
+        initFirebase().then(() => {
+            // Once authenticated and listeners are set up, hide loading and apply initial filters
+            document.getElementById('loading-indicator').style.display = 'none';
+            applyFilters();
+        });
+        
+        // Render initial icons
+        lucide.createIcons();
+    };
+
+</script>
+
+</body>
+</html>
