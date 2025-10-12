@@ -1,1 +1,1 @@
-TDS and TCS Prompt
+Create a web app using all in one file (html + js +css). We have to get the input as Income tax TDS & TCS section numbers as Per Income tax act 1961. I want to know the Amount Limits and rules and conditions for either deducting tds or collecting tcs . This is to be done under Income tax act,1961.
