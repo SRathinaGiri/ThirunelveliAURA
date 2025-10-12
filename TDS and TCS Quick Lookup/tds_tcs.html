@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TDS &amp; TCS Quick Lookup — Income Tax Act, 1961</title>
+<style>
+  :root{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;color:#0f172a}
+  body{background:linear-gradient(180deg,#f8fafc,#ffffff);min-height:100vh;padding:28px}
+  .card{max-width:900px;margin:12px auto;padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,.06);background:#fff}
+  h1{font-size:20px;margin:0 0 6px}
+  p.lead{margin:0 0 14px;color:#475569}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #e6eef6;font-size:15px}
+  select{padding:10px;border-radius:8px;border:1px solid #e6eef6}
+  button{background:#0b63d6;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+  .result{margin-top:18px;padding:14px;border-radius:8px;background:#fbfdff;border:1px solid #e6f0ff}
+  .field{margin:8px 0}
+  .label{font-weight:600;color:#0b2447}
+  .small{font-size:13px;color:#334155}
+  footer{margin-top:18px;font-size:13px;color:#475569}
+  .source-list{margin:8px 0;padding-left:18px}
+  .note{background:#fff7ed;padding:10px;border-radius:8px;border:1px dashed #ffd8a8;margin-top:12px}
+  .chip{display:inline-block;padding:6px 8px;border-radius:999px;background:#eef2ff;color:#1e3a8a;margin-right:6px;font-size:13px}
+  @media(max-width:560px){.row{flex-direction:column}}
+</style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>TDS &amp; TCS Quick Lookup (Income Tax Act, 1961) - Designed by Ramalaxmi</h1>
+    <p class="lead">Enter a section (example: <span class="chip">194C</span> <span class="chip">194Q</span> <span class="chip">206C(1H)</span>) to view typical thresholds, rates and conditions. Use this for quick reference — verify on official site before compliance.</p>
+
+    <div class="row" style="align-items:center">
+      <input id="sectionInput" type="text" placeholder="Enter section (e.g. 194C or 206C(1H))" />
+      <select id="kind">
+        <option value="tds">TDS (Tax Deducted at Source)</option>
+        <option value="tcs">TCS (Tax Collected at Source)</option>
+      </select>
+      <button id="go">Lookup</button>
+    </div>
+
+    <div id="result" class="result" aria-live="polite">
+      <div class="field"><span class="label">Try sections:</span> <span class="small">194C, 194Q, 194A, 194J, 194H, 192, 193, 206C(1H), 206C(1G), 194N</span></div>
+      <div class="note"><strong>Reminder:</strong> This tool shows commonly-applied thresholds and conditions summarized from official charts &amp; tax guidance. Confirm using the Income Tax Department pages linked below. (Law/rates change via Finance Acts and circulars.)</div>
+    </div>
+
+    <footer>
+      <div class="label">Main sources used</div>
+      <ul class="source-list">
+        <li><a href="https://incometaxindia.gov.in/charts%20%20tables/tds%20rates.htm" target="_blank" rel="noopener">Income Tax Dept. — TDS rates &amp; charts</a></li>
+        <li><a href="https://incometaxindia.gov.in/Documents/Left%20Menu/Threshold_limits_tax_deductor.htm" target="_blank" rel="noopener">Income Tax Dept. — Threshold limits</a></li>
+        <li><a href="https://incometaxindia.gov.in/Pages/tools/tds-calculator.aspx" target="_blank" rel="noopener">Income Tax Dept. — TDS tools &amp; calculator</a></li>
+        <li><a href="https://www.cleartax.in" target="_blank" rel="noopener">ClearTax — practical explanations (commonly referenced)</a></li>
+        <li><a href="https://www.incometaxmumbai.gov.in/tds/sections-and-rates-applicable-for-tds-on-a-transaction/" target="_blank" rel="noopener">Regional Tax Office charts / updates</a></li>
+      </ul>
+    </footer>
+  </div>
+
+<script>
+/*
+  Built-in data dictionary for common TDS/TCS sections.
+  This is a quick-reference dictionary (not exhaustive). Use it as a starter — update or extend as needed.
+  Always check Income Tax Department pages for final confirmation.
+*/
+const data = {
+  // TDS examples
+  "192": {
+    type:"TDS",
+    title:"S.192 — TDS on Salary",
+    desc:"Employer deducts TDS on salary as per estimated taxable income/rates. No TDS if total taxable income (after deductions) is below basic exemption and employer has Form 12BB etc.",
+    thresholds:"Depends on estimated taxable income and slab rates; employer should consider declarations (Form 12BB).",
+    rate:"As per slab rates applicable to employee's estimated total income.",
+    who:"Employer (deductor) deducts from salary payments to employee (deductee).",
+    notes:"TDS under s.192 is computed based on estimated annual income; check recent circulars and income-tax rules for exact calculations."
+  },
+  "193": {
+    type:"TDS",
+    title:"S.193 — Interest on securities",
+    desc:"TDS on interest on securities. Some exemptions apply (small amounts) and depending on instrument.",
+    thresholds:"Often no TDS if amount below specified small limits (see threshold charts).",
+    rate:"Varies; check income tax charts.",
+    who:"Payer of interest."
+  },
+  "194A": {
+    type:"TDS",
+    title:"S.194A — TDS on Interest other than 'interest on securities'",
+    desc:"TDS on interest (other than interest on securities) such as bank deposit interest (subject to provisions).",
+    thresholds:"Thresholds differ by payer type; historically certain thresholds (e.g. Rs.40,000/50,000) apply and may be higher for senior citizens or bank payers—refer official charts.",
+    rate:"Rate per Act (see official chart).",
+    who:"Payer of interest (e.g., bank, firm).",
+    notes:"Thresholds and exemptions for banks/co-op banks and senior citizens are specified in income-tax charts; always verify official page."
+  },
+  "194C": {
+    type:"TDS",
+    title:"S.194C — TDS on Payments to Contractors / Sub-contractors",
+    desc:"TDS applies on payments to contractors or for supply of labour/transport services etc.",
+    thresholds:"No TDS if single payment does not exceed ₹30,000 AND aggregate payments in the financial year do not exceed ₹1,00,000. If either condition is breached, TDS applies on whole amount.",
+    rate:"1% when recipient is individual/HUF; 2% in other cases (generally). Check current rate table.",
+    who:"Payer (contractee) deducts while making payment to contractor.",
+    notes:"Aggregate/ single-payment tests both matter; sources: Income Tax charts and practice guides."
+  },
+  "194H": {
+    type:"TDS",
+    title:"S.194H — TDS on Commission or Brokerage",
+    desc:"TDS on commission or brokerage payments.",
+    thresholds:"No TDS if aggregate/ single payments below specified small limits (refer official chart).",
+    rate:"As per schedule (generally 5% for many broker/commission payments; check for specifics).",
+    who:"Payer of commission/brokerage."
+  },
+  "194J": {
+    type:"TDS",
+    title:"S.194J — TDS on Fees for Professional or Technical Services",
+    desc:"TDS on professional, technical, royalty (non-film), non-compete and certain fees.",
+    thresholds:"No TDS if aggregate payments to a professional don't exceed specified small limit (e.g. historically ₹30,000) — verify official chart.",
+    rate:"Usually 10% (some specific rates differ; see official chart).",
+    who:"Payer of fees."
+  },
+  "194I": {
+    type:"TDS",
+    title:"S.194I — TDS on Rent",
+    desc:"TDS on rent for land/building/furniture/plant & machinery.",
+    thresholds:"Different thresholds have been notified (e.g., ₹50,000 per month in some cases) — verify current thresholds.",
+    rate:"Varies (2% or 10% depending on nature and recipient); check official schedule."
+  },
+  "194Q": {
+    type:"TDS",
+    title:"S.194Q — TDS on Purchase of Goods (buyer-side)",
+    desc:"Buyer of goods (with turnover above specified limit) needs to deduct TDS on purchases exceeding threshold.",
+    thresholds:"TDS triggers when aggregate purchases from a seller exceed ₹50 lakh in a financial year and buyer's turnover in preceding FY > ₹10 crore (verify current rules).",
+    rate:"0.1% on amount exceeding ₹50 lakh (check official chart).",
+    who:"Buyer (purchaser) deducts while making payment.",
+    notes:"This provision co-exists/overlaps in practice with TCS provisions — check conditions (buyer vs seller obligations) and recent clarifications."
+  },
+  "194N": {
+    type:"TDS",
+    title:"S.194N — TDS on Cash Withdrawals from Banks (specified limits)",
+    desc:"TDS on cash withdrawal by specified persons beyond certain thresholds (introduced to discourage large cash withdrawals).",
+    thresholds:"Different thresholds apply (e.g., higher for non-specified persons); refer official chart.",
+    rate:"Rates as per section and provisos (check official chart).",
+    who:"Bank / specified payer."
+  },
+
+  // TCS examples
+  "206C": {
+    type:"TCS",
+    title:"S.206C — Tax Collected at Source (general provisions)",
+    desc:"Section 206C and its sub-sections specify categories where seller/collector must collect tax at source (timber, scrap, foreign remittance, sale of goods, etc.).",
+    thresholds:"Varies by sub-section; many sub-sections have monetary thresholds or conditions.",
+    rate:"Varies by sub-section; see related sub-section."
+  },
+  "206C(1H)": {
+    type:"TCS",
+    title:"S.206C(1H) — TCS on Sale of Goods (historical / commonly referenced)",
+    desc:"Imposed TCS on sale of goods: seller to collect TCS when receipts from a buyer exceed a monetary threshold in a financial year and seller's turnover condition is met.",
+    thresholds:"Historically: collection if buyer's purchases from seller in FY exceed ₹50 lakh and seller's turnover in preceding FY > ₹10 crore. (Note: changes/updates have been made in recent years — always verify current law.)",
+    rate:"0.1% (typical rate used); higher rate if PAN/Aadhaar not available for buyer (non-PAN rates historically higher).",
+    who:"Seller collects from buyer at time of receipt of consideration.",
+    notes:"There have been amendments and judicial/administrative changes impacting 206C(1H) — verify latest Income Tax Dept. position before compliance."
+  },
+  "206C(1G)": {
+    type:"TCS",
+    title:"S.206C(1G) — TCS on Overseas Remittance (LRS) / Tour Packages",
+    desc:"TCS on foreign remittances under Liberalised Remittance Scheme (LRS) and on overseas tour packages.",
+    thresholds:"Different thresholds exist (e.g., certain remittances above ₹7 lakh/₹10 lakh depending on year & amendment). Check current limits for FY in question.",
+    rate:"Rates vary by purpose (education, medical, other) and by date of amendment; please check updated TCS rate circulars.",
+    who:"Authorized dealer (bank) or tour operator collects TCS."
+  }
+};
+
+// helper to normalize user input + match keys (allow with or without spaces)
+function findSection(q, kind){
+  if(!q) return null;
+  q = q.trim().toUpperCase();
+  // allow with or without parentheses spacing
+  const keys = Object.keys(data);
+  // first exact match
+  if(keys.includes(q)) return data[q];
+  // try remove hyphens/spaces
+  const q2 = q.replace(/\s+/g,'').replace(/-/g,'');
+  for(const k of keys){
+    if(k.replace(/\s+/g,'').replace(/-/g,'') === q2) return data[k];
+  }
+  // try numeric prefix match, e.g., user typed 206C, find 206C(1H) if kind=TCS and it's the only 206C variant
+  const candidates = keys.filter(k=>k.startsWith(q));
+  if(candidates.length===1) return data[candidates[0]];
+  return null;
+}
+
+document.getElementById('go').addEventListener('click',()=>{
+  const q = document.getElementById('sectionInput').value;
+  const kind = document.getElementById('kind').value; // not used strictly, but could be used to filter
+  const res = document.getElementById('result');
+  const info = findSection(q, kind);
+  if(!q){
+    res.innerHTML = '<div class="field"><span class="label">Enter a section in the box above and click Lookup.</span></div>';
+    return;
+  }
+  if(!info){
+    res.innerHTML = `<div class="field"><span class="label">No local entry found for "<strong>${escapeHtml(q)}</strong>".</span>
+      <div class="small">Tip: try formats like 194C, 194-Q, 206C(1H). If you want, you can add custom entries in the script.</div></div>
+      <div class="note">Also check the Income Tax Dept. charts &amp; tools (links in footer) for the authoritative position.</div>`;
+    return;
+  }
+  // render info
+  res.innerHTML = `
+    <div class="field"><span class="label">Section:</span> <span class="small">${escapeHtml(q)} — ${escapeHtml(info.title || '')}</span></div>
+    <div class="field"><span class="label">Type:</span> <span class="small">${escapeHtml(info.type || '')}</span></div>
+    <div class="field"><span class="label">Short description:</span> <div class="small">${escapeHtml(info.desc || '')}</div></div>
+    <div class="field"><span class="label">Thresholds / Limits:</span> <div class="small">${escapeHtml(info.thresholds || '—')}</div></div>
+    <div class="field"><span class="label">Common rates:</span> <div class="small">${escapeHtml(info.rate || '—')}</div></div>
+    <div class="field"><span class="label">Who is liable:</span> <div class="small">${escapeHtml(info.who || '—')}</div></div>
+    <div class="field"><span class="label">Notes:</span> <div class="small">${escapeHtml(info.notes || 'Check official Income Tax Dept. pages for full text, provisos and amendments.')}</div></div>
+    <div class="note"><strong>Quick compliance tip:</strong> where a rule depends on prior-year turnover (e.g., ₹10 crore test) or PAN availability, both sides (buyer & seller) should verify who actually bears the deduction/collection duty — mistakes are common when both TDS & TCS rules overlap.</div>
+  `;
+});
+
+// basic html escape
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});
+}
+
+// allow Enter key
+document.getElementById('sectionInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') document.getElementById('go').click();
+});
+</script>
+</body>
+</html>
