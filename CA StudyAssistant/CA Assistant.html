@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CA Study Assistant — All-in-One</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#60a5fa;--accent-2:#7c3aed}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#e6eef8;background:linear-gradient(180deg,#041026 0%, #061426 100%);margin:0;padding:24px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    textarea,input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-size:13px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;color:white;padding:10px 12px;border-radius:10px;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .section-title{font-weight:600;margin:8px 0;color:#cfe8ff}
+    .results{max-height:60vh;overflow:auto;padding:8px}
+    .row{display:flex;gap:8px}
+    .small{font-size:12px;color:var(--muted)}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    footer{margin-top:12px;color:var(--muted);font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>CA Study Assistant — All-in-One</h1>
+      <p class="lead">Paste your syllabus/notes, upload a file, or enter a link. Generates summaries, MCQs, mock tests, conceptual clarifications, and a study plan.</p>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <div class="section-title">1) Add your data source</div>
+      <textarea id="inputText" rows="10" placeholder="Paste notes or syllabus here..."></textarea>
+      <div class="controls">
+        <input type="file" id="fileInput" accept=".txt,.md" />
+        <input type="url" id="linkInput" placeholder="Or paste a web link (https://...)" />
+        <button id="loadLink">Load from link</button>
+        <button id="clearBtn" class="ghost">Clear</button>
+      </div>
+      <div class="controls">
+        <button id="btnGenerate">Generate everything</button>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="section-title">Outputs</div>
+      <div id="summaryText" class="small"></div>
+    </aside>
+  </main>
+
+  <footer>
+    Built for CA students — now supports loading text directly from links.<br>
+    Designed by <strong>N Vamseedharan</strong> &nbsp;|&nbsp; Email: <a href="mailto:vamseedharan1711@gmail.com">vamseedharan1711@gmail.com</a>
+  </footer>
+
+  <script>
+    const inputText = document.getElementById('inputText');
+    const fileInput = document.getElementById('fileInput');
+    const linkInput = document.getElementById('linkInput');
+    const loadLink = document.getElementById('loadLink');
+    const summaryText = document.getElementById('summaryText');
+    const btnGenerate = document.getElementById('btnGenerate');
+
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { inputText.value = ev.target.result; };
+      reader.readAsText(file);
+    });
+
+    loadLink.addEventListener('click', async () => {
+      const url = linkInput.value.trim();
+      if (!url) return alert('Please enter a valid URL');
+      summaryText.innerHTML = 'Fetching content...';
+      try {
+        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, 'text/html');
+        const text = doc.body.innerText || doc.body.textContent;
+        inputText.value = text.slice(0, 20000);
+        summaryText.innerHTML = 'Loaded text from link! Now click Generate.';
+      } catch (err) {
+        summaryText.innerHTML = 'Error loading from link.';
+      }
+    });
+
+    btnGenerate.addEventListener('click', () => {
+      const text = inputText.value.trim();
+      if (!text) return alert('Please add content first');
+      summaryText.innerText = summarize(text);
+    });
+
+    function summarize(text) {
+      const sentences = text.split(/[.!?]/).filter(s => s.length > 60);
+      const take = Math.max(3, Math.floor(sentences.length * 0.1));
+      return sentences.slice(0, take).join('. ') + '.';
+    }
+  </script>
+</body>
+</html>
