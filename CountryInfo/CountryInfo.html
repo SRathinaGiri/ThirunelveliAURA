@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Country Info Explorer</title>
+<style>
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #021c35, #09385b);
+  color: #e9f1f7;
+  margin: 0; padding: 0;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh;
+}
+.container {
+  margin-top: 40px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 900px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.3);
+}
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+input {
+  width: 70%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  margin-right: 10px;
+}
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4fc3f7;
+  color: #04263c;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover { background-color: #81d4fa; }
+#output {
+  margin-top: 20px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.country-flag {
+  width: 80px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+h2 { margin-top: 10px; }
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 25px;
+}
+.info-grid div { margin-bottom: 6px; }
+@media (max-width: 600px) {
+  .info-grid { grid-template-columns: 1fr; }
+  input { width: 100%; margin-bottom: 10px; }
+  button { width: 100%; }
+}
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #b3d9f3;
+}
+.error {
+  color: #ffb3b3;
+  background: rgba(255,0,0,0.1);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🌍 Country Info Explorer</h1>
+  <p style="text-align:center; color:#b8d5e3;">Designed by: Sri Nithish - Enter any country name to explore its key details</p>
+  <div style="text-align:center; margin-top:15px;">
+    <input id="countryInput" type="text" placeholder="e.g. India, Canada, Japan">
+    <button onclick="fetchCountryData()">Search</button>
+  </div>
+  <div id="output"></div>
+</div>
+
+<script>
+async function fetchCountryData() {
+  const name = document.getElementById('countryInput').value.trim();
+  const output = document.getElementById('output');
+  output.innerHTML = '';
+  if (!name) {
+    output.innerHTML = '<div class="error">Please enter a country name.</div>';
+    return;
+  }
+  output.innerHTML = '<div class="loading">Fetching details for ' + name + '...</div>';
+
+  try {
+    // 1️⃣ REST Countries API
+    const countryRes = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fullText=false`);
+    if (!countryRes.ok) throw new Error('Country not found.');
+    const countryData = (await countryRes.json())[0];
+
+    const countryName = countryData.name.common;
+    const population = countryData.population.toLocaleString();
+    const region = countryData.region;
+    const subregion = countryData.subregion || '';
+    const capital = countryData.capital ? countryData.capital[0] : 'N/A';
+    const flag = countryData.flags?.png || '';
+    const languages = countryData.languages ? Object.values(countryData.languages).join(', ') : 'N/A';
+    const currency = countryData.currencies
+      ? Object.values(countryData.currencies).map(c => `${c.name} (${c.symbol})`).join(', ')
+      : 'N/A';
+    const iso2 = countryData.cca2.toLowerCase();
+    const area = countryData.area?.toLocaleString() + ' km²' || 'N/A';
+    const timezone = countryData.timezones?.join(', ') || 'N/A';
+
+    // 2️⃣ Wikipedia summary (landscape)
+    let landscape = '';
+    let wikibaseItem = null;
+    try {
+      const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(countryName)}`);
+      if (wikiRes.ok) {
+        const wikiJson = await wikiRes.json();
+        landscape = wikiJson.extract || '';
+        wikibaseItem = wikiJson.wikibase_item || null;
+      }
+    } catch {}
+
+    // 3️⃣ World Bank literacy rate
+    let literacyRate = 'Data not available';
+    try {
+      const wbRes = await fetch(`https://api.worldbank.org/v2/country/${iso2}/indicator/SE.ADT.LITR.ZS?format=json`);
+      const wbJson = await wbRes.json();
+      const data = wbJson[1]?.find(d => d.value !== null);
+      if (data) literacyRate = `${data.value.toFixed(1)}% (${data.date})`;
+    } catch {}
+
+    // 4️⃣ World Bank GDP
+    let gdp = 'Data not available';
+    try {
+      const gdpRes = await fetch(`https://api.worldbank.org/v2/country/${iso2}/indicator/NY.GDP.MKTP.CD?format=json`);
+      const gdpJson = await gdpRes.json();
+      const data = gdpJson[1]?.find(d => d.value !== null);
+      if (data) gdp = "$" + (data.value / 1e9).toFixed(2) + " Billion (" + data.date + ")";
+    } catch {}
+
+    // 5️⃣ Wikidata Leader & Ruling Party
+    let leader = 'Not available';
+    let party = 'Not available';
+    if (wikibaseItem) {
+      try {
+        const wdRes = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${wikibaseItem}.json`);
+        const wdJson = await wdRes.json();
+        const ent = wdJson.entities[wikibaseItem];
+        if (ent?.claims) {
+          const leaderId = (ent.claims.P35 || ent.claims.P6)?.[0]?.mainsnak?.datavalue?.value?.id;
+          if (leaderId) {
+            const leaderData = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${leaderId}.json`);
+            const leaderJson = await leaderData.json();
+            const lEnt = leaderJson.entities[leaderId];
+            leader = lEnt?.labels?.en?.value || 'N/A';
+            const partyId = lEnt?.claims?.P102?.[0]?.mainsnak?.datavalue?.value?.id;
+            if (partyId) {
+              const partyData = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${partyId}.json`);
+              const partyJson = await partyData.json();
+              party = partyJson.entities[partyId]?.labels?.en?.value || 'N/A';
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // 🧾 Generate Output
+    output.innerHTML = `
+      <div style="text-align:center;">
+        <img src="${flag}" alt="Flag of ${countryName}" class="country-flag">
+        <h2>${countryName}</h2>
+        <p>${landscape}</p>
+      </div>
+      <div class="info-grid">
+        <div><b>Population:</b> ${population}</div>
+        <div><b>Region:</b> ${region} (${subregion})</div>
+        <div><b>Capital:</b> ${capital}</div>
+        <div><b>Languages:</b> ${languages}</div>
+        <div><b>Currency:</b> ${currency}</div>
+        <div><b>Literacy Rate:</b> ${literacyRate}</div>
+        <div><b>GDP:</b> ${gdp}</div>
+        <div><b>Leader:</b> ${leader}</div>
+        <div><b>Ruling Party:</b> ${party}</div>
+        <div><b>Area:</b> ${area}</div>
+        <div><b>Timezone:</b> ${timezone}</div>
+      </div>
+    `;
+  } catch (err) {
+    output.innerHTML = `<div class="error">⚠️ ${err.message}</div>`;
+  }
+}
+</script>
+</body>
+</html>
