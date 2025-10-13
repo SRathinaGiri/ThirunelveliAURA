@@ -1,1 +1,1 @@
-CountryInfo prompt.
+Create a web app using all in one file (html + js + css). Input should be Country name. Output should be the Country's Population, Landscape, Major Languages, Currency Used, Litreacy Rate, Current Prime Minister or President, Ruling Party. Can you create for me.  
