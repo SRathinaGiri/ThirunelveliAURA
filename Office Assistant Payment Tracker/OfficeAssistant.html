@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Maa & Associates — Work Tracker with Invoice Creator</title>
+<style>
+  /* Theme (CA Blue & Gold) */
+  :root{
+    --blue: #003366;
+    --gold: #FFCC00;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --muted: #5f6b7a;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --glass: rgba(0,51,102,0.06);
+    --radius: 12px;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#071431;padding:0;font-size:14px}
+  .app{display:flex;min-height:100vh}
+  /* SIDEBAR */
+  .sidebar{width:260px;background:linear-gradient(180deg,var(--blue),#154a88);color:white;padding:18px;flex-shrink:0}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .logomark{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#052b4a,#2b5fa8);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold)}
+  .brand h2{margin:0;font-size:18px}
+  .brand p{margin:2px 0 0;font-size:12px;color:rgba(255,255,255,0.85)}
+  .nav{margin-top:18px}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:0;color:inherit;padding:10px 8px;border-radius:8px;text-align:left;cursor:pointer;font-size:14px}
+  .nav button:hover{background:rgba(255,255,255,0.03)}
+  .nav button.active{background:rgba(255,255,255,0.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02)}
+  .nav .badge{margin-left:auto;background:var(--gold);color:var(--blue);padding:4px 8px;border-radius:999px;font-weight:700;font-size:12px}
+  .sidebar .small{font-size:12px;color:rgba(255,255,255,0.75);margin-top:8px}
+  .sidebar .foot{position:absolute;bottom:18px;left:18px;right:18px;font-size:12px;color:rgba(255,255,255,0.6)}
+  /* MAIN */
+  .main{flex:1;padding:20px}
+  header.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .top-left h1{margin:0;color:var(--blue);font-size:20px}
+  .top-left p{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .top-right{display:flex;gap:8px;align-items:center}
+  .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(8,19,39,0.06);margin-top:14px}
+  .grid2{display:grid;grid-template-columns:1fr 360px;gap:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="text"],input[type="date"],input[type="number"],select,textarea{
+    width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8;background:#fff;font-size:14px;
+  }
+  textarea{min-height:60px;resize:vertical}
+  button.btn{padding:8px 12px;border-radius:8px;border:0;background:var(--blue);color:white;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(0,51,102,0.08);color:var(--blue);padding:8px 10px;border-radius:8px}
+  .btn-gold{background:var(--gold);color:var(--blue);font-weight:700}
+  .small{font-size:12px;color:var(--muted)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .summary{display:flex;gap:10px;flex-wrap:wrap}
+  .stat{background:var(--glass);padding:10px;border-radius:10px;min-width:140px}
+  .stat h3{margin:0;font-size:16px}
+  .table-wrap{max-height:520px;overflow:auto;border-radius:10px;border:1px solid #eef6ff;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px;border-bottom:1px solid #f3f6fb;text-align:left;vertical-align:middle}
+  th{background:#fff;position:sticky;top:0}
+  .badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:12px}
+  .b-pending{background:#fff7e6;color:#8a5800;border:1px solid #fff1d1}
+  .b-received{background:#ecfdf5;color:#065f46;border:1px solid #d1fae5}
+  .b-advance{background:#eef2ff;color:#08306b;border:1px solid #dbeafe}
+  .highlight-overdue{background:linear-gradient(90deg, rgba(255,204,0,0.07), rgba(220,38,38,0.03));}
+  .no-print{display:inline-block}
+  @media (max-width:1000px){
+    .app{flex-direction:column}
+    .sidebar{width:100%;display:flex;overflow:auto;padding:12px}
+    .main{padding:12px}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media print{
+    .sidebar,.no-print{display:none}
+  }
+
+  /* Invoice Modal/Print area */
+  .modal{
+    position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;
+  }
+  .modal .dialog{width:880px;max-width:95%;background:#fff;border-radius:10px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,0.4);overflow:auto;max-height:90vh}
+  .invoice{background:#fff;padding:20px;border-radius:6px;border:1px solid #eef3fb}
+  .invoice h2{margin:0;color:var(--blue)}
+  .invoice .muted{color:var(--muted);font-size:13px}
+  .invoice .row{display:flex;justify-content:space-between;gap:10px;margin-top:12px}
+  .invoice table{width:100%;border-collapse:collapse;margin-top:12px}
+  .invoice th, .invoice td{border:1px solid #eef3fb;padding:8px;text-align:left}
+  .inv-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logomark">M&A</div>
+      <div class="brand">
+        <h2>Maa & Associates</h2>
+        <p>Chartered Accountants — Work Tracker - By Uma Maheswari</p>
+      </div>
+    </div>
+
+    <nav class="nav" id="sidebarNav">
+      <button data-tab="dashboard" class="active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button data-tab="tasks" onclick="switchTab('tasks')">Task Allotment & Tracking</button>
+      <button data-tab="master" onclick="switchTab('master')">Master Data</button>
+      <button data-tab="reports" onclick="switchTab('reports')">Monthly Reports</button>
+      <button data-tab="invoice" onclick="switchTab('invoice')">Invoice Creator <span class="badge" id="invBadge">INV</span></button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="small" style="margin-top:18px">Theme: CA Blue & Gold</div>
+    <div class="foot">Built for steady practice — Maa & Associates, Maharaja Nagar, Tirunelveli</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="top">
+      <div class="top-left">
+        <h1>Maa & Associates</h1>
+        <p class="small" id="welcomeText">Loading…</p>
+      </div>
+      <div class="top-right">
+        <div id="topStats" class="summary"></div>
+      </div>
+    </header>
+
+    <!-- LOGIN CARD -->
+    <section id="loginCard" class="card" style="max-width:680px;margin:22px auto">
+      <h2 style="margin:0 0 8px;color:var(--blue)">Sign in</h2>
+      <p class="small">Default credentials available. Partner and staff both can edit master data; staff can add/edit their own tasks.</p>
+      <div style="margin-top:12px">
+        <label>Username</label>
+        <input id="loginUser" placeholder="partner or staff1" />
+      </div>
+      <div style="margin-top:8px">
+        <label>Password</label>
+        <input id="loginPass" type="password" placeholder="password" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" onclick="doLogin()">Sign in</button>
+        <button class="ghost" onclick="fillDemoCreds()">Show defaults</button>
+        <button class="ghost" onclick="clearAllData()">Reset Local Data</button>
+      </div>
+      <div style="margin-top:12px" class="small">
+        Defaults: Partner — <code>partner</code>/<code>1234</code> | Staff — <code>staff1..staff5</code>/<code>1234</code>
+      </div>
+    </section>
+
+    <!-- APP CONTENT (hidden until login) -->
+    <div id="appContent" style="display:none">
+      <!-- DASHBOARD -->
+      <section id="tab-dashboard" class="card" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div>
+            <h3 style="margin:0;color:var(--blue)">Dashboard</h3>
+            <p class="small">Overview of work, payments, overdue tasks — a tidy ledger for steady study.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn" onclick="switchTab('tasks')">Add Task</button>
+            <button class="ghost" onclick="switchTab('reports')">Monthly Reports</button>
+            <button class="ghost" onclick="switchTab('invoice')">Create Invoice</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" id="dashboardStats" class="summary"></div>
+
+        <div style="margin-top:12px">
+          <h4 style="margin:0 0 8px">Recent Tasks</h4>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>S.No</th><th>Staff</th><th>Client</th><th>Date</th><th>Work</th><th>Amount</th><th>Payment Status</th><th>Invoice</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="recentTasks"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section id="tab-tasks" class="card" style="display:none">
+        <h3 style="margin:0;color:var(--blue)">Task Allotment & Tracking</h3>
+        <p class="small">Add, edit tasks. Staff can add/edit their own tasks. Use Master Data dropdowns.</p>
+
+        <form id="taskForm" onsubmit="event.preventDefault(); saveTask();">
+          <div class="grid2" style="margin-top:12px">
+            <div>
+              <div class="grid3">
+                <div>
+                  <label>Staff *</label>
+                  <select id="f_employee" required></select>
+                </div>
+                <div>
+                  <label>Client *</label>
+                  <select id="f_client" required></select>
+                </div>
+                <div>
+                  <label>Date *</label>
+                  <input id="f_date" type="date" required />
+                </div>
+              </div>
+
+              <div class="grid3" style="margin-top:10px">
+                <div>
+                  <label>Work *</label>
+                  <select id="f_work" required></select>
+                </div>
+                <div>
+                  <label>Type</label>
+                  <select id="f_type"><option>Compliance</option><option>Audit</option><option>Advisory</option><option>Tax Filing</option><option>Other</option></select>
+                </div>
+                <div>
+                  <label>Status</label>
+                  <select id="f_status"><option>Pending</option><option>In Progress</option><option>Completed</option></select>
+                </div>
+              </div>
+
+              <div class="grid4" style="margin-top:10px">
+                <div>
+                  <label>Invoice Sent</label>
+                  <select id="f_invoice"><option>No</option><option>Yes</option></select>
+                </div>
+                <div>
+                  <label>Amount (₹)</label>
+                  <input id="f_amount" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div>
+                  <label>Payment Status</label>
+                  <select id="f_paymentStatus"><option>Pending</option><option>Received</option><option>Advance Received</option></select>
+                </div>
+                <div>
+                  <label>Payment Date</label>
+                  <input id="f_paymentDate" type="date" />
+                </div>
+              </div>
+
+              <div style="margin-top:10px">
+                <label>Notes</label>
+                <textarea id="f_notes" placeholder="Optional notes..."></textarea>
+              </div>
+
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <input type="hidden" id="f_editingId" />
+                <button class="btn" type="submit" id="taskSaveBtn">Add Task</button>
+                <button type="button" class="ghost" onclick="resetTaskForm()">Reset</button>
+                <button type="button" class="ghost" onclick="exportTasksCSV()">Export CSV</button>
+                <button type="button" class="ghost" onclick="exportAllJSON()">Export JSON</button>
+              </div>
+            </div>
+
+            <aside>
+              <div class="small">Filters</div>
+              <div style="margin-top:8px">
+                <label>By Staff</label>
+                <select id="filterStaff" onchange="renderTaskTable()"><option value="">All</option></select>
+              </div>
+              <div style="margin-top:8px">
+                <label>By Payment</label>
+                <select id="filterPayment" onchange="renderTaskTable()"><option value="">All</option><option>Pending</option><option>Received</option><option>Advance Received</option></select>
+              </div>
+              <div style="margin-top:8px">
+                <label>Search</label>
+                <input id="filterSearch" placeholder="client, work..." oninput="renderTaskTable()" />
+              </div>
+
+              <div style="margin-top:12px">
+                <label>Bulk Actions</label>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="ghost" onclick="bulkMarkReceived()">Mark Received</button>
+                  <button class="ghost" onclick="bulkDeleteTasks()">Delete</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </form>
+
+        <div style="margin-top:12px" class="table-wrap">
+          <table>
+            <thead>
+              <tr><th style="width:36px"><input id="selectAllTasks" type="checkbox" onclick="toggleSelectAllTasks(this)" /></th><th>S.No</th><th>Staff</th><th>Client</th><th>Date</th><th>Work</th><th>Amount</th><th>Payment Status</th><th>Invoice</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MASTER DATA -->
+      <section id="tab-master" class="card" style="display:none">
+        <h3 style="margin:0;color:var(--blue)">Master Data</h3>
+        <p class="small">Add / remove Staff, Clients & Works. Both Partner & Staff have access.</p>
+
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <label>Add Staff</label>
+            <input id="md_staff" placeholder="e.g., staff6" />
+            <div style="margin-top:8px"><button class="ghost" onclick="addMaster('staff')">Add Staff</button></div>
+            <ul id="list_staff" class="small" style="margin-top:8px"></ul>
+          </div>
+
+          <div style="flex:1;min-width:240px">
+            <label>Add Client</label>
+            <input id="md_client" placeholder="Client name" />
+            <div style="margin-top:8px"><button class="ghost" onclick="addMaster('client')">Add Client</button></div>
+            <ul id="list_client" class="small" style="margin-top:8px"></ul>
+          </div>
+
+          <div style="flex:1;min-width:240px">
+            <label>Add Work</label>
+            <input id="md_work" placeholder="Work title / description" />
+            <div style="margin-top:8px"><button class="ghost" onclick="addMaster('work')">Add Work</button></div>
+            <ul id="list_work" class="small" style="margin-top:8px"></ul>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <h4 style="margin:0 0 8px">User Accounts (Change password)</h4>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="md_selectUser"></select>
+            <input id="md_newPass" placeholder="New password" />
+            <button class="ghost" onclick="changeUserPass()">Change Password</button>
+            <button class="ghost" onclick="listUsers()">Refresh Users</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="tab-reports" class="card" style="display:none">
+        <h3 style="margin:0;color:var(--blue)">Monthly Reports</h3>
+        <p class="small">Generate per-staff monthly reports and export to CSV (Excel).</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <input id="rep_month" type="month" />
+          <select id="rep_staff"><option value="">All Staff</option></select>
+          <button class="ghost" onclick="generateMonthlyReport()">Generate</button>
+          <button class="ghost" onclick="exportMonthlyCSV()">Export CSV</button>
+        </div>
+        <div id="rep_output" style="margin-top:12px"></div>
+      </section>
+
+      <!-- INVOICE -->
+      <section id="tab-invoice" class="card" style="display:none">
+        <h3 style="margin:0;color:var(--blue)">Invoice Creator</h3>
+        <p class="small">Select a task to auto-fill invoice. You can edit fields before printing.</p>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <label style="margin-right:8px">Select Task</label>
+          <select id="inv_selectTask" style="flex:1"></select>
+          <button class="btn" onclick="prepareInvoice()">Create Invoice</button>
+        </div>
+
+        <div style="margin-top:12px" id="invoicePreviewArea"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- INVOICE MODAL -->
+<div id="invoiceModal" style="display:none" class="modal">
+  <div class="dialog">
+    <div class="invoice" id="invoiceDoc">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h2>Maa & Associates</h2>
+          <div class="muted">Chartered Accountants</div>
+          <div class="muted">Maharaja Nagar, Tirunelveli</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;color:var(--blue)" id="invNumber">MAA-INV-001</div>
+          <div class="muted" id="invDate">Date: </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <strong>Bill To</strong>
+          <div id="invClient"></div>
+          <div id="invClientAddr" class="muted"></div>
+        </div>
+        <div style="text-align:right">
+          <strong>Prepared By</strong>
+          <div id="invStaff"></div>
+        </div>
+      </div>
+
+      <table>
+        <thead><tr><th>Description</th><th style="width:120px">Amount (₹)</th></tr></thead>
+        <tbody id="invItems"></tbody>
+        <tfoot>
+          <tr><th style="text-align:right">Total</th><th id="invTotal">₹0.00</th></tr>
+        </tfoot>
+      </table>
+
+      <div style="margin-top:12px" class="muted">Notes: <span id="invNotes"></span></div>
+
+      <div class="inv-actions no-print">
+        <button class="ghost" onclick="closeInvoiceModal()">Cancel</button>
+        <button class="ghost" onclick="askMarkInvoiceSent()">Mark Invoice Sent</button>
+        <button class="btn" onclick="printInvoice()">Print / Save as PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Maa & Associates App JS
+   Single-file SPA with localStorage
+   ========================= */
+
+const STORAGE = 'maa_tasks_v4';
+const MASTER = 'maa_master_v4';
+const USERS = 'maa_users_v4';
+const SESSION = 'maa_session_v4';
+const INVSEQ = 'maa_inv_seq_v4';
+
+/* default data */
+const defaultMaster = {
+  staff: ['staff1','staff2','staff3','staff4','staff5'],
+  clients: ['Shri Traders','ABC Constructions','Green Farms'],
+  works: ['GST Return','Quarterly Audit','ITR Filing']
+};
+
+const defaultUsers = {
+  partner: { username:'partner', password:'1234', role:'partner', name:'Partner' },
+  staff1: { username:'staff1', password:'1234', role:'staff', name:'staff1' },
+  staff2: { username:'staff2', password:'1234', role:'staff', name:'staff2' },
+  staff3: { username:'staff3', password:'1234', role:'staff', name:'staff3' },
+  staff4: { username:'staff4', password:'1234', role:'staff', name:'staff4' },
+  staff5: { username:'staff5', password:'1234', role:'staff', name:'staff5' }
+};
+
+/* app state */
+let tasks = [];
+let master = {};
+let users = {};
+let currentUser = null;
+let invSeq = 0;
+
+/* helpers */
+function uid(){ return 'id_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function daysAgo(d){ const dt = new Date(); dt.setDate(dt.getDate()-d); return dt.toISOString().slice(0,10); }
+
+/* load storage */
+function loadAll(){
+  tasks = JSON.parse(localStorage.getItem(STORAGE) || '[]');
+  master = JSON.parse(localStorage.getItem(MASTER) || JSON.stringify(defaultMaster));
+  users = JSON.parse(localStorage.getItem(USERS) || JSON.stringify(defaultUsers));
+  currentUser = JSON.parse(localStorage.getItem(SESSION) || 'null');
+  invSeq = parseInt(localStorage.getItem(INVSEQ) || '0', 10) || 0;
+}
+function saveAll(){
+  localStorage.setItem(STORAGE, JSON.stringify(tasks));
+  localStorage.setItem(MASTER, JSON.stringify(master));
+  localStorage.setItem(USERS, JSON.stringify(users));
+  if(currentUser) localStorage.setItem(SESSION, JSON.stringify(currentUser));
+  localStorage.setItem(INVSEQ, String(invSeq));
+}
+
+/* init */
+loadAll();
+
+/* ---------- AUTH ---------- */
+function fillDemoCreds(){ document.getElementById('loginUser').value='partner'; document.getElementById('loginPass').value='1234'; }
+function doLogin(){
+  const u = (document.getElementById('loginUser').value || '').trim();
+  const p = (document.getElementById('loginPass').value || '').trim();
+  if(!u || !p){ alert('Enter username & password'); return; }
+  const acct = users[u];
+  if(!acct || acct.password !== p){ alert('Invalid credentials'); return; }
+  currentUser = acct;
+  localStorage.setItem(SESSION, JSON.stringify(currentUser));
+  enterApp();
+}
+function logout(){
+  if(confirm('Logout?')) {
+    currentUser = null; localStorage.removeItem(SESSION);
+    document.getElementById('appContent').style.display='none';
+    document.getElementById('loginCard').style.display='block';
+    document.getElementById('welcomeText').innerText = '';
+  }
+}
+function clearAllData(){
+  if(!confirm('Clear ALL local data (tasks, master, users)?')) return;
+  localStorage.clear();
+  alert('Local storage cleared. The page will reload.');
+  location.reload();
+}
+
+/* ---------- UI / Navigation ---------- */
+function enterApp(){
+  loadAll();
+  document.getElementById('loginCard').style.display='none';
+  document.getElementById('appContent').style.display='block';
+  document.getElementById('welcomeText').innerText = `${currentUser.name || currentUser.username} (${currentUser.role.toUpperCase()})`;
+  populateTopStats();
+  populateDashboard();
+  populateTaskFormOptions();
+  populateMasterLists();
+  populateTaskTable();
+  populateReportsOptions();
+  populateInvoiceSelector();
+  markSidebarActive('dashboard');
+}
+
+/* Switch tab */
+function switchTab(tab){
+  // hide all tab sections
+  const tabs = ['dashboard','tasks','master','reports','invoice'];
+  tabs.forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if(el) el.style.display = (t === tab) ? 'block' : 'none';
+  });
+  markSidebarActive(tab);
+  // refresh relevant content
+  if(tab === 'dashboard') populateDashboard();
+  if(tab === 'tasks') { populateTaskFormOptions(); populateTaskTable(); }
+  if(tab === 'master') populateMasterLists();
+  if(tab === 'reports') populateReportsOptions();
+  if(tab === 'invoice') populateInvoiceSelector();
+}
+function markSidebarActive(tab){
+  const buttons = document.querySelectorAll('.nav button');
+  buttons.forEach(b => {
+    if(b.getAttribute('data-tab') === tab) b.classList.add('active'); else b.classList.remove('active');
+  });
+}
+
+/* ---------- Dashboard ---------- */
+function populateTopStats(){
+  // compute totals
+  const total = tasks.length;
+  let pending=0, received=0, overdue=0;
+  tasks.forEach(t=>{
+    if(t.paymentStatus === 'Received') received += Number(t.amount||0);
+    else pending += Number(t.amount||0);
+    if(isOverdue(t)) overdue++;
+  });
+  const html = `
+    <div class="stat"><h3>${total}</h3><p>Total Tasks</p></div>
+    <div class="stat"><h3>₹${pending.toFixed(2)}</h3><p>Pending Payments</p></div>
+    <div class="stat"><h3>₹${received.toFixed(2)}</h3><p>Payments Received</p></div>
+    <div class="stat"><h3>${overdue}</h3><p>Overdue (30+ days)</p></div>
+  `;
+  document.getElementById('topStats').innerHTML = html;
+  document.getElementById('dashboardStats').innerHTML = html;
+}
+function populateDashboard(){
+  populateTopStats();
+  // recent tasks table
+  const rows = tasks.slice().sort((a,b)=> new Date(b.allotDate) - new Date(a.allotDate)).slice(0,8);
+  const tbody = document.getElementById('recentTasks'); tbody.innerHTML='';
+  rows.forEach((t,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${esc(t.employee)}</td><td>${esc(t.client)}</td><td>${t.allotDate}</td><td>${esc(t.work)}</td><td>₹${Number(t.amount||0).toFixed(2)}</td><td>${formatPayment(t.paymentStatus)}</td><td>${t.invoice==='Yes' ? '<span class="badge b-received">Yes</span>' : '<span class="badge b-pending">No</span>'}</td><td><button class="ghost" onclick="startEditTask('${t.id}')">Edit</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- Tasks ---------- */
+function populateTaskFormOptions(){
+  const emp = document.getElementById('f_employee');
+  const client = document.getElementById('f_client');
+  const work = document.getElementById('f_work');
+  const filter = document.getElementById('filterStaff');
+  [emp, client, work, filter].forEach(el => { if(!el) return; el.innerHTML=''; });
+
+  if(currentUser.role === 'staff'){
+    const o = optionEl(currentUser.username); emp.appendChild(o); emp.value = currentUser.username; emp.disabled = true;
+  } else {
+    emp.appendChild(optionEl('','Select staff...'));
+    master.staff.forEach(s=> emp.appendChild(optionEl(s)));
+    emp.disabled = false;
+  }
+
+  client.appendChild(optionEl('','Select client...'));
+  master.clients.forEach(c=> client.appendChild(optionEl(c)));
+
+  work.appendChild(optionEl('','Select work...'));
+  master.works.forEach(w=> work.appendChild(optionEl(w)));
+
+  filter.appendChild(optionEl('','All'));
+  master.staff.forEach(s=> filter.appendChild(optionEl(s)));
+  document.getElementById('f_date').value = today();
+}
+
+/* Save task (add/update) */
+function saveTask(){
+  const editingId = document.getElementById('f_editingId').value;
+  const data = readTaskForm(); if(!data) return;
+
+  // staff cannot add tasks for other staff
+  if(currentUser.role === 'staff' && data.employee !== currentUser.username){ alert('Staff can add tasks only for themselves'); return; }
+
+  if(editingId){
+    const idx = tasks.findIndex(t=> t.id===editingId);
+    if(idx === -1){ alert('Task not found'); return; }
+    // staff may edit their own tasks
+    if(currentUser.role === 'staff' && tasks[idx].employee !== currentUser.username){ alert('You can only edit your tasks'); return; }
+    tasks[idx] = {...tasks[idx], ...data};
+    document.getElementById('f_editingId').value = '';
+    document.getElementById('taskSaveBtn').innerText = 'Add Task';
+  } else {
+    const obj = { id: uid(), createdAt: new Date().toISOString(), ...data };
+    tasks.push(obj);
+  }
+  saveAll();
+  populateTaskTable();
+  populateDashboard();
+  populateInvoiceSelector();
+  resetTaskForm();
+}
+function readTaskForm(){
+  const employee = (document.getElementById('f_employee').value || '').trim();
+  const client = (document.getElementById('f_client').value || '').trim();
+  const allotDate = document.getElementById('f_date').value;
+  const work = (document.getElementById('f_work').value || '').trim();
+  const type = document.getElementById('f_type').value;
+  const status = document.getElementById('f_status').value;
+  const invoice = document.getElementById('f_invoice').value;
+  const amount = parseFloat(document.getElementById('f_amount').value || 0);
+  const paymentStatus = document.getElementById('f_paymentStatus').value;
+  const paymentDate = document.getElementById('f_paymentDate').value;
+  const notes = document.getElementById('f_notes').value || '';
+  if(!employee || !client || !allotDate || !work){ alert('Please fill required fields'); return null; }
+  return { employee, client, allotDate, work, type, status, invoice, amount, paymentStatus, paymentDate, notes };
+}
+function resetTaskForm(){
+  document.getElementById('taskForm').reset();
+  document.getElementById('f_editingId').value = '';
+  document.getElementById('taskSaveBtn').innerText = 'Add Task';
+  if(currentUser.role === 'staff'){ document.getElementById('f_employee').value = currentUser.username; document.getElementById('f_employee').disabled = true; }
+  document.getElementById('f_date').value = today();
+}
+
+/* render task table */
+function populateTaskTable(){ renderTaskTable(); }
+function renderTaskTable(){
+  const tbody = document.getElementById('taskTableBody'); tbody.innerHTML='';
+  const filterStaff = document.getElementById('filterStaff').value;
+  const filterPayment = document.getElementById('filterPayment').value;
+  const search = (document.getElementById('filterSearch').value || '').toLowerCase();
+
+  const visible = tasks.filter(t => {
+    if(currentUser.role === 'staff' && t.employee !== currentUser.username) return false;
+    if(filterStaff && t.employee !== filterStaff) return false;
+    if(filterPayment && t.paymentStatus !== filterPayment) return false;
+    if(search){
+      const hay = (t.client + ' ' + t.work + ' ' + t.employee).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  visible.forEach((t,i)=>{
+    const tr = document.createElement('tr');
+    if(isOverdue(t)) tr.classList.add('highlight-overdue');
+    tr.innerHTML = `<td><input type="checkbox" class="taskChk" data-id="${t.id}" /></td>
+      <td>${i+1}</td><td>${esc(t.employee)}</td><td>${esc(t.client)}</td><td>${t.allotDate}</td><td>${esc(t.work)}</td>
+      <td>₹${Number(t.amount||0).toFixed(2)}</td><td>${formatPayment(t.paymentStatus)}</td>
+      <td>${t.invoice==='Yes' ? '<span class="badge b-received">Yes</span>' : '<span class="badge b-pending">No</span>'}</td>
+      <td>${actionButtonsForTask(t)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* helper for task action buttons */
+function actionButtonsForTask(t){
+  const canEdit = (currentUser.role === 'partner') || (currentUser.role === 'staff' && t.employee === currentUser.username);
+  const editBtn = `<button class="ghost" onclick="startEditTask('${t.id}')">${canEdit ? 'Edit' : 'View'}</button>`;
+  const delBtn = (currentUser.role === 'partner' || (currentUser.role === 'staff' && t.employee === currentUser.username)) ? `<button class="ghost" onclick="deleteTask('${t.id}')">Delete</button>` : '';
+  const invBtn = `<button class="btn" onclick="prepareInvoiceFromTask('${t.id}')">Invoice</button>`;
+  return [editBtn, delBtn, invBtn].join(' ');
+}
+
+/* edit/delete */
+function startEditTask(id){
+  const t = tasks.find(x=> x.id === id);
+  if(!t){ alert('Task not found'); return; }
+  if(currentUser.role === 'staff' && t.employee !== currentUser.username){ alert('You can only edit your tasks'); return; }
+  document.getElementById('f_editingId').value = t.id;
+  document.getElementById('f_employee').value = t.employee;
+  document.getElementById('f_client').value = t.client;
+  document.getElementById('f_date').value = t.allotDate;
+  document.getElementById('f_work').value = t.work;
+  document.getElementById('f_type').value = t.type;
+  document.getElementById('f_status').value = t.status;
+  document.getElementById('f_invoice').value = t.invoice;
+  document.getElementById('f_amount').value = Number(t.amount||0);
+  document.getElementById('f_paymentStatus').value = t.paymentStatus;
+  document.getElementById('f_paymentDate').value = t.paymentDate || '';
+  document.getElementById('f_notes').value = t.notes || '';
+  document.getElementById('taskSaveBtn').innerText = 'Save Changes';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteTask(id){
+  if(!confirm('Delete this task? This cannot be undone.')) return;
+  tasks = tasks.filter(x=> x.id !== id);
+  saveAll();
+  populateTaskTable();
+  populateDashboard();
+  populateInvoiceSelector();
+}
+
+/* bulk */
+function toggleSelectAllTasks(cb){
+  document.querySelectorAll('.taskChk').forEach(ch => ch.checked = cb.checked);
+}
+function selectedTaskIds(){
+  return Array.from(document.querySelectorAll('.taskChk:checked')).map(ch => ch.getAttribute('data-id'));
+}
+function bulkMarkReceived(){
+  if(currentUser.role !== 'partner'){ alert('Only partner may bulk mark payments.'); return; }
+  const ids = selectedTaskIds();
+  if(ids.length === 0){ alert('Select tasks first'); return; }
+  ids.forEach(id => { const t = tasks.find(x=> x.id===id); if(t){ t.paymentStatus = 'Received'; t.paymentDate = today(); }});
+  saveAll(); populateTaskTable(); populateDashboard();
+}
+function bulkDeleteTasks(){
+  if(currentUser.role !== 'partner'){ alert('Only partner may bulk delete'); return; }
+  const ids = selectedTaskIds();
+  if(ids.length === 0){ alert('Select tasks first'); return; }
+  if(!confirm('Delete selected tasks?')) return;
+  tasks = tasks.filter(t => !ids.includes(t.id));
+  saveAll(); populateTaskTable(); populateDashboard();
+}
+
+/* Export */
+function exportTasksCSV(){
+  const rows = tasks.slice();
+  if(rows.length === 0){ alert('No tasks'); return; }
+  const header = ['S.No','Staff','Client','Date','Work','Type','Status','Invoice','Amount','PaymentStatus','PaymentDate','Notes'];
+  const lines = [header.join(',')];
+  rows.forEach((r,i) => {
+    const cols = [i+1, csv(r.employee), csv(r.client), r.allotDate, csv(r.work), csv(r.type), csv(r.status), r.invoice, Number(r.amount||0).toFixed(2), r.paymentStatus, r.paymentDate || '', csv(r.notes||'')];
+    lines.push(cols.join(','));
+  });
+  download(lines.join('\n'), `maa_tasks_${today()}.csv`, 'text/csv');
+}
+function exportAllJSON(){ download(JSON.stringify(tasks, null, 2), `maa_tasks_${today()}.json`, 'application/json'); }
+function csv(s){ if(s==null) return ''; return '"' + String(s).replace(/"/g,'""') + '"'; }
+function download(content, filename, mime){ const blob = new Blob([content], {type: mime}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+
+/* ---------- Master Data ---------- */
+function addMaster(kind){
+  const id = {staff:'md_staff', client:'md_client', work:'md_work'}[kind];
+  const val = (document.getElementById(id).value || '').trim();
+  if(!val){ alert('Enter a value'); return; }
+  if(kind === 'staff'){
+    if(master.staff.includes(val)){ alert('Staff exists'); return; }
+    master.staff.push(val);
+    // create user with default password if not exists
+    if(!users[val]) users[val] = { username: val, password: '1234', role: 'staff', name: val };
+  } else if(kind === 'client'){
+    if(master.clients.includes(val)){ alert('Client exists'); return; }
+    master.clients.push(val);
+  } else if(kind === 'work'){
+    if(master.works.includes(val)){ alert('Work exists'); return; }
+    master.works.push(val);
+  }
+  document.getElementById(id).value = '';
+  saveAll();
+  populateMasterLists();
+  populateTaskFormOptions();
+  populateInvoiceSelector();
+  alert('Added to master data');
+}
+function populateMasterLists(){
+  const ls = {staff:'list_staff', client:'list_client', work:'list_work'};
+  Object.keys(ls).forEach(k => {
+    const el = document.getElementById(ls[k]); el.innerHTML = '';
+    master[k].forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `${esc(item)} <button class="ghost" onclick="removeMaster('${k}','${item}')">remove</button>`;
+      el.appendChild(li);
+    });
+  });
+  listUsers();
+}
+function removeMaster(kind, val){
+  if(!confirm(`Remove ${val} from ${kind}?`)) return;
+  master[kind] = master[kind].filter(x=> x !== val);
+  if(kind === 'staff'){
+    if(confirm(`Also remove user account ${val}?`)){ delete users[val]; }
+  }
+  saveAll(); populateMasterLists(); populateTaskFormOptions();
+}
+function listUsers(){
+  const sel = document.getElementById('md_selectUser'); sel.innerHTML = '';
+  const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = 'Select user'; sel.appendChild(opt0);
+  Object.keys(users).forEach(u => {
+    const o = document.createElement('option'); o.value = u; o.textContent = `${u} (${users[u].role})`; sel.appendChild(o);
+  });
+}
+function changeUserPass(){
+  const sel = document.getElementById('md_selectUser').value;
+  const np = document.getElementById('md_newPass').value;
+  if(!sel){ alert('Select a user'); return; }
+  if(!np){ alert('Enter new password'); return; }
+  users[sel].password = np;
+  saveAll();
+  alert('Password changed');
+}
+
+/* ---------- Reports ---------- */
+function populateReportsOptions(){
+  const sel = document.getElementById('rep_staff'); sel.innerHTML = '';
+  const o0 = optionEl('','All Staff'); sel.appendChild(o0);
+  master.staff.forEach(s => sel.appendChild(optionEl(s)));
+}
+function generateMonthlyReport(){
+  const m = document.getElementById('rep_month').value;
+  if(!m){ alert('Select month'); return; }
+  const [yy,mm] = m.split('-'); const start = new Date(yy, Number(mm)-1, 1); const end = new Date(yy, Number(mm), 1);
+  const staffSel = document.getElementById('rep_staff').value;
+  const agg = {};
+  tasks.forEach(t => {
+    const d = new Date(t.allotDate);
+    if(d >= start && d < end){
+      if(staffSel && t.employee !== staffSel) return;
+      if(!agg[t.employee]) agg[t.employee] = { tasks: [], assigned: 0, received: 0, completed: 0 };
+      agg[t.employee].tasks.push(t);
+      agg[t.employee].assigned += Number(t.amount||0);
+      if(t.paymentStatus === 'Received') agg[t.employee].received += Number(t.amount||0);
+      if(t.status === 'Completed') agg[t.employee].completed++;
+    }
+  });
+  let html = '<table style="width:100%;border-collapse:collapse"><thead><tr><th>Staff</th><th>#Works</th><th>Assigned</th><th>Received</th><th>Completed</th><th>Details</th></tr></thead><tbody>';
+  Object.keys(agg).forEach(s=>{
+    const g = agg[s];
+    html += `<tr><td>${esc(s)}</td><td>${g.tasks.length}</td><td>₹${g.assigned.toFixed(2)}</td><td>₹${g.received.toFixed(2)}</td><td>${g.completed}</td><td><button class="ghost" onclick='showReportDetails("${m}","${s}")'>View</button></td></tr>`;
+  });
+  if(Object.keys(agg).length === 0) html += '<tr><td colspan="6" class="small">No data for selected month</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('rep_output').innerHTML = html;
+}
+function showReportDetails(month, staff){
+  const [yy,mm] = month.split('-'); const start = new Date(yy, Number(mm)-1, 1); const end = new Date(yy, Number(mm), 1);
+  const rows = tasks.filter(t => t.employee === staff && new Date(t.allotDate) >= start && new Date(t.allotDate) < end);
+  let html = `<h4>Details — ${esc(staff)} (${month})</h4><table style="width:100%;border-collapse:collapse"><thead><tr><th>S.No</th><th>Date</th><th>Client</th><th>Work</th><th>Amount</th><th>PaymentStatus</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=> html += `<tr><td>${i+1}</td><td>${r.allotDate}</td><td>${esc(r.client)}</td><td>${esc(r.work)}</td><td>₹${Number(r.amount||0).toFixed(2)}</td><td>${r.paymentStatus}</td></tr>`);
+  if(rows.length===0) html += '<tr><td colspan="6" class="small">No rows</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('rep_output').innerHTML = html;
+}
+function exportMonthlyCSV(){
+  const m = document.getElementById('rep_month').value; if(!m){ alert('Select month'); return; }
+  const [yy,mm] = m.split('-'); const start = new Date(yy, Number(mm)-1, 1); const end = new Date(yy, Number(mm), 1);
+  const rows = tasks.filter(t => new Date(t.allotDate) >= start && new Date(t.allotDate) < end);
+  if(rows.length === 0){ alert('No rows'); return; }
+  const header = ['Staff','Client','Work','Date','Amount','PaymentStatus','Invoice','Notes'];
+  const lines = [header.join(',')];
+  rows.forEach(r => {
+    const cols = [csv(r.employee), csv(r.client), csv(r.work), r.allotDate, Number(r.amount||0).toFixed(2), r.paymentStatus, r.invoice, csv(r.notes||'')];
+    lines.push(cols.join(','));
+  });
+  download(lines.join('\n'), `maa_report_${m}.csv`, 'text/csv');
+}
+
+/* ---------- Invoice Creator ---------- */
+function populateInvoiceSelector(){
+  const sel = document.getElementById('inv_selectTask');
+  sel.innerHTML = '';
+  const o0 = optionEl('','Select task...');
+  sel.appendChild(o0);
+  // Show tasks visible to user (staff sees only own)
+  tasks.forEach(t => {
+    if(currentUser.role === 'staff' && t.employee !== currentUser.username) return;
+    const label = `${t.allotDate} | ${t.employee} → ${t.client} : ${t.work} (₹${Number(t.amount||0).toFixed(2)})`;
+    sel.appendChild(optionEl(t.id, label));
+  });
+}
+
+/* Prepare invoice from select or from a task id */
+function prepareInvoice(){
+  const id = document.getElementById('inv_selectTask').value;
+  if(!id){ alert('Select a task'); return; }
+  prepareInvoiceFromTask(id);
+}
+function prepareInvoiceFromTask(taskId){
+  const t = tasks.find(x=> x.id === taskId);
+  if(!t){ alert('Task not found'); return; }
+  // prepare invoice fields
+  const invNo = nextInvoiceNumber();
+  document.getElementById('invNumber').innerText = invNo;
+  document.getElementById('invDate').innerText = 'Date: ' + today();
+  document.getElementById('invClient').innerText = t.client;
+  document.getElementById('invClientAddr').innerText = 'Maharaja Nagar, Tirunelveli';
+  document.getElementById('invStaff').innerText = t.employee;
+  // items
+  const tbody = document.getElementById('invItems'); tbody.innerHTML = '';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${esc(t.work)} — ${esc(t.type)}<div class="muted" style="font-size:12px">${esc(t.notes||'')}</div></td><td style="text-align:right">₹${Number(t.amount||0).toFixed(2)}</td>`;
+  tbody.appendChild(tr);
+  document.getElementById('invTotal').innerText = '₹' + Number(t.amount||0).toFixed(2);
+  document.getElementById('invNotes').innerText = 'Thank you for your business.';
+  // show modal
+  document.getElementById('invoiceModal').style.display = 'flex';
+  // store current invoice meta in modal dataset
+  document.getElementById('invoiceModal').dataset.taskId = taskId;
+  document.getElementById('invoiceModal').dataset.invNo = invNo;
+}
+
+/* invoice number generator */
+function nextInvoiceNumber(){
+  invSeq = (parseInt(invSeq,10) || 0) + 1;
+  localStorage.setItem(INVSEQ, String(invSeq));
+  const pad = String(invSeq).padStart(3,'0');
+  return `MAA-INV-${pad}`;
+}
+
+/* ask to mark invoice sent (user requested "Ask before marking") */
+function askMarkInvoiceSent(){
+  const taskId = document.getElementById('invoiceModal').dataset.taskId;
+  if(!taskId){ alert('No task linked'); return; }
+  if(!confirm('Mark Invoice Sent = YES for the task? (Confirm)')) return;
+  const t = tasks.find(x=> x.id === taskId);
+  if(!t){ alert('Task not found'); return; }
+  t.invoice = 'Yes';
+  saveAll(); populateTaskTable(); populateDashboard(); populateInvoiceSelector();
+  alert('Invoice marked as sent.');
+}
+
+/* print invoice */
+function printInvoice(){
+  // print only invoice area
+  const inv = document.getElementById('invoiceDoc').innerHTML;
+  const w = window.open('', '_blank', 'noopener');
+  w.document.write('<html><head><title>Invoice</title><style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#071431} .invoice{max-width:800px;margin:auto} table{width:100%;border-collapse:collapse} th,td{border:1px solid #eee;padding:8px;text-align:left}</style></head><body>');
+  w.document.write(document.getElementById('invoiceDoc').outerHTML);
+  w.document.write('</body></html>');
+  w.document.close();
+  w.print();
+}
+
+/* invoice modal controls */
+function closeInvoiceModal(){
+  document.getElementById('invoiceModal').style.display = 'none';
+  // reset modal dataset
+  delete document.getElementById('invoiceModal').dataset.taskId;
+  delete document.getElementById('invoiceModal').dataset.invNo;
+}
+
+/* ---------- Utilities ---------- */
+function isOverdue(t){
+  if(!t.allotDate) return false;
+  const diff = Math.floor((new Date() - new Date(t.allotDate)) / (1000*60*60*24));
+  return diff >= 30 && t.paymentStatus !== 'Received' && Number(t.amount||0) > 0;
+}
+function formatPayment(s){
+  if(s === 'Received') return `<span class="badge b-received">Received</span>`;
+  if(s === 'Advance Received') return `<span class="badge b-advance">Advance</span>`;
+  return `<span class="badge b-pending">Pending</span>`;
+}
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function optionEl(val, label){
+  const o = document.createElement('option'); o.value = val; o.textContent = label || val; return o;
+}
+
+/* ---------- Small UI utilities ---------- */
+function startEditTask(id){ switchTab('tasks'); setTimeout(()=> startEditTaskDelayed(id), 50); }
+function startEditTaskDelayed(id){ startEditTaskImmediate(id); }
+function startEditTaskImmediate(id){
+  const t = tasks.find(x=> x.id === id); if(!t) return;
+  if(currentUser.role === 'staff' && t.employee !== currentUser.username){ alert('You can edit only your own tasks'); return; }
+  document.getElementById('f_editingId').value = t.id;
+  document.getElementById('f_employee').value = t.employee;
+  document.getElementById('f_client').value = t.client;
+  document.getElementById('f_date').value = t.allotDate;
+  document.getElementById('f_work').value = t.work;
+  document.getElementById('f_type').value = t.type;
+  document.getElementById('f_status').value = t.status;
+  document.getElementById('f_invoice').value = t.invoice;
+  document.getElementById('f_amount').value = Number(t.amount||0);
+  document.getElementById('f_paymentStatus').value = t.paymentStatus;
+  document.getElementById('f_paymentDate').value = t.paymentDate || '';
+  document.getElementById('f_notes').value = t.notes || '';
+  document.getElementById('taskSaveBtn').innerText = 'Save Changes';
+  scrollToTop();
+}
+
+/* small helpers */
+function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ---------- Persistence ---------- */
+function saveAll(){
+  localStorage.setItem(STORAGE, JSON.stringify(tasks));
+  localStorage.setItem(MASTER, JSON.stringify(master));
+  localStorage.setItem(USERS, JSON.stringify(users));
+  if(currentUser) localStorage.setItem(SESSION, JSON.stringify(currentUser));
+  localStorage.setItem(INVSEQ, String(invSeq));
+}
+
+/* ---------- On load ---------- */
+window.addEventListener('load', ()=>{
+  loadAll();
+  // if session exists, auto-enter
+  if(currentUser){
+    enterApp();
+  } else {
+    document.getElementById('loginCard').style.display = 'block';
+  }
+  // initial population
+  populateMasterLists();
+});
+
+/* Expose some functions to global for onclick handlers */
+window.switchTab = switchTab;
+window.fillDemoCreds = fillDemoCreds;
+window.doLogin = doLogin;
+window.clearAllData = clearAllData;
+window.saveTask = saveTask;
+window.resetTaskForm = resetTaskForm;
+window.populateTaskTable = populateTaskTable;
+window.populateTaskFormOptions = populateTaskFormOptions;
+window.addMaster = addMaster;
+window.removeMaster = removeMaster;
+window.listUsers = listUsers;
+window.changeUserPass = changeUserPass;
+window.generateMonthlyReport = generateMonthlyReport;
+window.showReportDetails = showReportDetails;
+window.exportMonthlyCSV = exportMonthlyCSV;
+window.prepareInvoice = prepareInvoice;
+window.prepareInvoiceFromTask = prepareInvoiceFromTask;
+window.closeInvoiceModal = closeInvoiceModal;
+window.printInvoice = printInvoice;
+window.askMarkInvoiceSent = askMarkInvoiceSent;
+window.exportTasksCSV = exportTasksCSV;
+window.exportAllJSON = exportAllJSON;
+window.bulkMarkReceived = bulkMarkReceived;
+window.bulkDeleteTasks = bulkDeleteTasks;
+window.populateInvoiceSelector = populateInvoiceSelector;
+
+/* small utility to update dynamic content when master/tasks/users change */
+function updateAllViews(){
+  populateTopStats();
+  populateDashboard();
+  populateTaskFormOptions();
+  populateTaskTable();
+  populateMasterLists();
+  populateReportsOptions();
+  populateInvoiceSelector();
+}
+
+/* after changes, save & update */
+function saveAllAndRefresh(){
+  saveAll();
+  updateAllViews();
+}
+
+/* invoke saveAllAndRefresh when needed */
+function saveAll(){ localStorage.setItem(STORAGE, JSON.stringify(tasks)); localStorage.setItem(MASTER, JSON.stringify(master)); localStorage.setItem(USERS, JSON.stringify(users)); if(currentUser) localStorage.setItem(SESSION, JSON.stringify(currentUser)); localStorage.setItem(INVSEQ, String(invSeq)); updateAllViews(); }
+
+/* Utility to fill default demo data if none present */
+if(tasks.length === 0 && confirm('Load demo data to preview the app? (You can remove it later)')){
+  master = JSON.parse(JSON.stringify(defaultMaster));
+  users = JSON.parse(JSON.stringify(defaultUsers));
+  tasks = [
+    { id: uid(), employee:'staff1', client:'Shri Traders', allotDate: daysAgo(40), work:'GST Return', type:'Compliance', status:'Pending', invoice:'No', amount:12500, paymentStatus:'Pending', paymentDate:'', notes:'Follow up for invoice' },
+    { id: uid(), employee:'staff2', client:'ABC Constructions', allotDate: daysAgo(10), work:'Quarterly Audit', type:'Audit', status:'In Progress', invoice:'No', amount:45000, paymentStatus:'Advance Received', paymentDate: daysAgo(9), notes:'' },
+    { id: uid(), employee:'staff3', client:'Green Farms', allotDate: daysAgo(60), work:'ITR Filing', type:'Tax Filing', status:'Completed', invoice:'Yes', amount:6000, paymentStatus:'Received', paymentDate: daysAgo(30), notes:'Done' }
+  ];
+  invSeq = 3;
+  saveAll();
+  location.reload();
+}
+
+/* tiny helper to populate invoice selector when tasks change */
+function populateInvoiceSelector(){
+  const sel = document.getElementById('inv_selectTask');
+  if(!sel) return;
+  sel.innerHTML = '';
+  sel.appendChild(optionEl('','Select task...'));
+  tasks.forEach(t => {
+    if(currentUser.role === 'staff' && t.employee !== currentUser.username) return;
+    const label = `${t.allotDate} | ${t.employee} → ${t.client} : ${t.work} (₹${Number(t.amount||0).toFixed(2)})`;
+    sel.appendChild(optionEl(t.id, label));
+  });
+}
+
+/* small helper to ensure UI updates reflect stored data */
+function populateInvoiceSelectorIfVisible(){ if(document.getElementById('tab-invoice').style.display !== 'none') populateInvoiceSelector(); }
+
+/* When master or tasks update, call saveAllAndRefresh */
+</script>
+</body>
+</html>
