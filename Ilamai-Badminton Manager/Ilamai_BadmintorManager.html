@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ILAMAI BADMINTON ARENA — Court Manager (Single File)</title>
+  <style>
+    /* Clean white base theme */
+    :root{--bg:#ffffff;--muted:#54607a;--brand:#0b6b6b;--card:#fbfdff;--accent:#0b6b6b}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:#122;line-height:1.35;padding:18px}
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:14px;margin-top:14px}
+    .card{background:var(--card);border:1px solid #e6eef2;border-radius:10px;padding:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin-top:8px}
+    input,select,button{padding:8px;border:1px solid #d6dde3;border-radius:6px;font-size:14px}
+    button{background:var(--accent);color:#fff;border:none}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+    th,td{border:1px solid #eef3f6;padding:8px;text-align:left}
+    th{background:#f7fbfb;color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:20px;border:1px solid #e6eef2;background:#fff;margin-right:6px;cursor:pointer}
+    .pill.active{background:var(--accent);color:#fff}
+    .muted{color:var(--muted)}
+    .right{float:right}
+    .small{font-size:13px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .sig{height:70px;border-bottom:1px solid #ccc;margin-top:18px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>ILAMAI BADMINTON ARENA — Court Manager - Designed by Aishwarya</h1>
+        <div class="sub">Indoor stadium, wooden floor — 2 shuttle courts • Address: VM CHATRAM, TIRUNELVELI</div>
+      </div>
+      <div style="text-align:right">
+        <div class="muted small">Single-file app — saves data locally</div>
+        <div style="margin-top:6px"><button id="btnInstall">Install / Add to Home screen</button></div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h3 style="margin:0">Register / Add Booking / Client</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:220px">
+            <label>Category</label>
+            <select id="type">
+              <option value="member">Member (monthly)</option>
+              <option value="student_beginner">Student — Beginner (monthly)</option>
+              <option value="student_advanced">Student — Advanced (monthly)</option>
+              <option value="guest">Guest (per visit)</option>
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:160px">
+            <label>Name</label>
+            <input id="name" placeholder="Client name or note" />
+          </div>
+
+          <div style="width:120px">
+            <label>Hours</label>
+            <input id="hours" type="number" value="1" min="0.25" step="0.25" />
+          </div>
+
+          <div style="width:160px">
+            <label>Court</label>
+            <select id="court"><option>Court 1</option><option>Court 2</option></select>
+          </div>
+
+          <div style="flex:1;min-width:160px">
+            <label>Timing</label>
+            <input id="timing" placeholder="e.g. Mon/Wed 6-7pm or 2025-10-11 18:00" />
+          </div>
+
+          <div style="width:140px">
+            <label>Fee (₹)</label>
+            <input id="fee" type="number" />
+          </div>
+
+          <div style="width:120px">
+            <label>Paid</label>
+            <select id="paid"><option value="yes">Yes</option><option value="no">No</option></select>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button id="btnAdd">Add / Save</button>
+          <button id="btnAddMultiple">Add Multiple</button>
+          <input id="copies" type="number" value="1" min="1" style="width:70px" />
+          <div class="muted small right" style="margin-left:auto">Changes auto-saved in browser</div>
+        </div>
+
+        <hr style="margin-top:12px;border:none;height:12px;background:transparent" />
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="pill active" data-filter="all">All</span>
+          <span class="pill" data-filter="member">Members</span>
+          <span class="pill" data-filter="student">Students</span>
+          <span class="pill" data-filter="guest">Guests</span>
+          <span style="margin-left:auto;color:var(--muted)">Search:</span>
+          <input id="search" placeholder="name or timing" style="width:160px" />
+        </div>
+
+        <table id="tbl">
+          <thead><tr><th>#</th><th>Cat</th><th>Name</th><th>Court</th><th>Timing</th><th>Hrs</th><th>Fee (₹)</th><th>Paid</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <div style="flex:1" class="card small">
+            <div class="muted">Total Entries</div>
+            <div id="totalCount">0</div>
+          </div>
+          <div style="flex:1" class="card small">
+            <div class="muted">Monthly (collected)</div>
+            <div id="monthlyIncome">₹0</div>
+          </div>
+          <div style="flex:1" class="card small">
+            <div class="muted">Guests (collected)</div>
+            <div id="guestIncome">₹0</div>
+          </div>
+          <div style="flex:1" class="card small">
+            <div class="muted">Unpaid</div>
+            <div id="unpaidAmount">₹0</div>
+          </div>
+        </div>
+
+      </section>
+
+      <aside class="card">
+        <h3 style="margin-top:0">Settings & Owner Panel</h3>
+        <div class="muted small">Custom fee plans & invoice generation</div>
+
+        <div style="margin-top:10px">
+          <label>Member — base hours</label>
+          <input id="baseHoursMember" type="number" value="1" min="0.25" step="0.25" />
+          <label>Member — monthly fee (₹)</label>
+          <input id="baseFeeMember" type="number" value="1200" />
+
+          <label>Beginner — base hours</label>
+          <input id="baseHoursBeginner" type="number" value="1" min="0.25" step="0.25" />
+          <label>Beginner — monthly fee (₹)</label>
+          <input id="baseFeeBeginner" type="number" value="1200" />
+
+          <label>Advanced — base hours</label>
+          <input id="baseHoursAdvanced" type="number" value="2" min="0.25" step="0.25" />
+          <label>Advanced — monthly fee (₹)</label>
+          <input id="baseFeeAdvanced" type="number" value="3000" />
+
+          <label>Guest — per hour (₹)</label>
+          <input id="perHourGuest" type="number" value="100" />
+
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button id="btnSavePlans">Save Fee Plans</button>
+            <button id="btnLoadSample">Load Sample Data</button>
+            <button id="btnClearAll">Clear All Data</button>
+          </div>
+        </div>
+
+        <hr />
+        <h4>Invoices</h4>
+        <label>Invoice Date</label>
+        <input id="invoiceDate" type="date" value="" />
+        <label>Include categories</label>
+        <select id="invoiceFilter"><option value="all">All</option><option value="member">Members</option><option value="student">Students</option><option value="guest">Guests</option></select>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="btnInvoicePDF">Generate Monthly Invoice (PDF)</button>
+          <button id="btnReceiptPDF">Generate Receipt for Selected</button>
+        </div>
+
+        <hr />
+        <div class="muted small">Version 1.1 — Single HTML file. Data stored locally (localStorage). Export available via PDF.</div>
+      </aside>
+    </div>
+
+    <footer style="margin-top:18px;text-align:center;color:var(--muted)">ILAMAI BADMINTON ARENA — VM CHATRAM, TIRUNELVELI</footer>
+  </div>
+
+  <!-- Libraries for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    // Single-file app logic
+    const STORAGE_KEY = 'ilamai_badminton_v1';
+    const PLANS_KEY = 'ilamai_feeplans_v1';
+
+    // Default fee plans
+    const defaultPlans = {
+      baseHoursMember:1, baseFeeMember:1200,
+      baseHoursBeginner:1, baseFeeBeginner:1200,
+      baseHoursAdvanced:2, baseFeeAdvanced:3000,
+      perHourGuest:100
+    };
+
+    // Elements
+    const el = id => document.getElementById(id);
+    const tblBody = document.querySelector('#tbl tbody');
+
+    // State
+    let dataset = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || [];
+    let plans = JSON.parse(localStorage.getItem(PLANS_KEY) || 'null') || defaultPlans;
+
+    // Init UI values from plans
+    el('baseHoursMember').value = plans.baseHoursMember;
+    el('baseFeeMember').value = plans.baseFeeMember;
+    el('baseHoursBeginner').value = plans.baseHoursBeginner;
+    el('baseFeeBeginner').value = plans.baseFeeBeginner;
+    el('baseHoursAdvanced').value = plans.baseHoursAdvanced;
+    el('baseFeeAdvanced').value = plans.baseFeeAdvanced;
+    el('perHourGuest').value = plans.perHourGuest;
+
+    // Utility
+    function uid(){return 'id_'+Math.random().toString(36).slice(2,9)}
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(dataset));}
+    function savePlans(){plans = {
+      baseHoursMember: Number(el('baseHoursMember').value), baseFeeMember: Number(el('baseFeeMember').value),
+      baseHoursBeginner: Number(el('baseHoursBeginner').value), baseFeeBeginner: Number(el('baseFeeBeginner').value),
+      baseHoursAdvanced: Number(el('baseHoursAdvanced').value), baseFeeAdvanced: Number(el('baseFeeAdvanced').value),
+      perHourGuest: Number(el('perHourGuest').value)
+    }; localStorage.setItem(PLANS_KEY, JSON.stringify(plans)); alert('Fee plans saved'); recalcAll(); render(); }
+
+    function recalcAmountFor(item){
+      // If guest: per hour
+      if(item.type==='guest'){
+        item.fee = (plans.perHourGuest || 0) * (Number(item.hours) || 0);
+      } else if(item.type==='member'){
+        // monthly proportional to base hours
+        const base = plans.baseFeeMember || 0; const baseH = plans.baseHoursMember || 1;
+        item.fee = Math.round((base * (Number(item.hours) || baseH) / baseH));
+      } else if(item.type==='student_beginner'){
+        const base = plans.baseFeeBeginner || 0; const baseH = plans.baseHoursBeginner || 1;
+        item.fee = Math.round((base * (Number(item.hours) || baseH) / baseH));
+      } else if(item.type==='student_advanced'){
+        const base = plans.baseFeeAdvanced || 0; const baseH = plans.baseHoursAdvanced || 1;
+        item.fee = Math.round((base * (Number(item.hours) || baseH) / baseH));
+      }
+      return item;
+    }
+
+    function recalcAll(){ dataset = dataset.map(d=>recalcAmountFor(d)); save(); }
+
+    // Preload sample if empty
+    function loadSample(){ if(dataset.length>0 && !confirm('Append sample data to existing? Click OK to append.')) return;
+      const today = new Date().toISOString().slice(0,10);
+      const items = [];
+      // 2 Members
+      items.push({id:uid(),type:'member',name:'Member A',court:'Court 1',timing:'Daily 6-7pm',hours:1,paid:true});
+      items.push({id:uid(),type:'member',name:'Member B',court:'Court 2',timing:'Daily 7-8pm',hours:1,paid:true});
+      // 3 beginners
+      items.push({id:uid(),type:'student_beginner',name:'Beginner 1',court:'Court 1',timing:'Tue 5-6pm',hours:1,paid:true});
+      items.push({id:uid(),type:'student_beginner',name:'Beginner 2',court:'Court 2',timing:'Thu 5-6pm',hours:1,paid:true});
+      items.push({id:uid(),type:'student_beginner',name:'Beginner 3',court:'Court 1',timing:'Sat 9-10am',hours:1,paid:true});
+      // 4 advanced
+      items.push({id:uid(),type:'student_advanced',name:'Advanced 1',court:'Court 1',timing:'Mon/Wed 6-8pm',hours:2,paid:true});
+      items.push({id:uid(),type:'student_advanced',name:'Advanced 2',court:'Court 2',timing:'Mon/Wed 6-8pm',hours:2,paid:true});
+      items.push({id:uid(),type:'student_advanced',name:'Advanced 3',court:'Court 1',timing:'Tue/Thu 7-9pm',hours:2,paid:true});
+      items.push({id:uid(),type:'student_advanced',name:'Advanced 4',court:'Court 2',timing:'Sat 10-12pm',hours:2,paid:true});
+      // 5 guests
+      for(let i=1;i<=5;i++) items.push({id:uid(),type:'guest',name:'Guest '+i,court:'Court '+((i%2)+1),timing:today,hours:1,paid:true});
+      // recalc fees
+      items.forEach(it=>recalcAmountFor(it));
+      dataset = dataset.concat(items); save(); render(); alert('Sample data loaded'); }
+
+    // Add entry
+    el('btnAdd').addEventListener('click', ()=>{ addEntry(Number(el('copies').value||1)); });
+    el('btnAddMultiple').addEventListener('click', ()=>{ addEntry(Number(el('copies').value||1)); });
+    function addEntry(copies=1){
+      const type = el('type').value; const name = el('name').value || (type==='guest'?'Guest':(type==='member'?'Member':'Student'));
+      const hours = Number(el('hours').value||1); const timing = el('timing').value || new Date().toISOString().slice(0,10);
+      const court = el('court').value || 'Court 1'; const paid = el('paid').value==='yes';
+      for(let i=0;i<copies;i++){
+        const item = {id:uid(),type,name: (copies>1? (name+' #'+(i+1)) : name),court,timing,hours,paid};
+        recalcAmountFor(item);
+        dataset.push(item);
+      }
+      save(); render(); alert('Added '+copies+' entry(ies)');
+    }
+
+    // Render
+    function render(){
+      const filter = Array.from(document.querySelectorAll('.pill')).find(p=>p.classList.contains('active')).dataset.filter || 'all';
+      const q = (el('search').value||'').toLowerCase();
+      tblBody.innerHTML = '';
+      let count=0, monthly=0, guests=0, unpaid=0;
+      dataset.forEach((d,idx)=>{
+        if(filter==='member' && d.type!=='member') return;
+        if(filter==='student' && !(d.type==='student_beginner' || d.type==='student_advanced')) return;
+        if(filter==='guest' && d.type!=='guest') return;
+        if(q && !(d.name.toLowerCase().includes(q) || (d.timing||'').toLowerCase().includes(q))) return;
+        count++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${count}</td><td>${niceType(d.type)}</td><td>${d.name}</td><td>${d.court||''}</td><td>${d.timing||''}</td><td>${d.hours}</td><td>₹${d.fee||0}</td><td>${d.paid?'<span style="color:green">Yes</span>':'<span style="color:red">No</span>'}</td><td style="white-space:nowrap"><button onclick="editItem('${d.id}')">Edit</button> <button onclick="togglePaid('${d.id}')">Toggle Paid</button> <button onclick="del('${d.id}')">Delete</button></td>`;
+        tblBody.appendChild(tr);
+        // stats
+        if(d.meta === 'Monthly' || d.type!=='guest') monthly += d.paid ? (d.fee||0) : 0;
+        if(d.type==='guest') guests += d.paid ? (d.fee||0) : 0;
+        if(!d.paid) unpaid += d.fee||0;
+      });
+      el('totalCount').textContent = dataset.length;
+      el('monthlyIncome').textContent = '₹'+monthly;
+      el('guestIncome').textContent = '₹'+guests;
+      el('unpaidAmount').textContent = '₹'+unpaid;
+    }
+
+    // Helpers wired to window for onclicks in string templates
+    window.del = function(id){ if(!confirm('Delete this entry?')) return; dataset = dataset.filter(d=>d.id!==id); save(); render(); }
+    window.togglePaid = function(id){ const it = dataset.find(d=>d.id===id); if(it){ it.paid = !it.paid; save(); render(); } }
+    window.editItem = function(id){ const it = dataset.find(d=>d.id===id); if(!it) return alert('Not found');
+      const newName = prompt('Name', it.name) || it.name;
+      const newTiming = prompt('Timing', it.timing) || it.timing;
+      const newCourt = prompt('Court', it.court||'Court 1') || it.court;
+      const newHours = Number(prompt('Hours', it.hours) || it.hours);
+      const paid = confirm('Mark as paid? OK = paid, Cancel = unpaid');
+      it.name=newName; it.timing=newTiming; it.court=newCourt; it.hours=newHours; it.paid=paid;
+      recalcAmountFor(it); save(); render();
+    }
+
+    // Filter pills
+    document.querySelectorAll('.pill').forEach(p=>{ p.addEventListener('click', ()=>{ document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active')); p.classList.add('active'); render(); })});
+    el('search').addEventListener('input', ()=>render());
+
+    // Save plans
+    el('btnSavePlans').addEventListener('click', savePlans);
+    el('btnLoadSample').addEventListener('click', loadSample);
+    el('btnClearAll').addEventListener('click', ()=>{ if(confirm('Clear all stored data?')){ dataset = []; save(); render(); } });
+
+    // Install button
+    el('btnInstall').addEventListener('click', ()=>{ alert('To install: open browser menu → Add to Home screen (Android) or Install (desktop). Save this file as HTML and host for full PWA experience.'); });
+
+    // Invoice PDF Generation using jsPDF & autotable
+    el('btnInvoicePDF').addEventListener('click', ()=>{
+      const invDate = el('invoiceDate').value || new Date().toISOString().slice(0,10);
+      const filter = el('invoiceFilter').value;
+      // build rows
+      const rows = [];
+      let total = 0;
+      dataset.forEach(d=>{
+        if(filter==='member' && d.type!=='member') return;
+        if(filter==='student' && !(d.type==='student_beginner' || d.type==='student_advanced')) return;
+        if(filter==='guest' && d.type!=='guest') return;
+        rows.push([invDate, d.name, niceType(d.type), '₹'+(d.fee||0)]);
+        total += d.fee||0;
+      });
+      if(rows.length===0) return alert('No items for selected filter');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14); doc.text('ILAMAI BADMINTON ARENA', 14, 18);
+      doc.setFontSize(10); doc.text('Address: VM CHATRAM, TIRUNELVELI', 14, 24);
+      doc.setFontSize(11); doc.text('Monthly Invoice', 14, 32);
+
+      // table
+      doc.autoTable({
+        startY:38,
+        head:[['Date','Name','Category','Amount (₹)']],
+        body: rows,
+        theme:'grid',
+        styles:{fontSize:10}
+      });
+      const finalY = doc.lastAutoTable.finalY || 38;
+      doc.setFontSize(11); doc.text('Total: ₹'+total, 14, finalY + 10);
+
+      // signature placeholder
+      doc.setFontSize(10); doc.text('Owner Signature:', 14, finalY + 28);
+      doc.line(50, finalY + 27, 160, finalY + 27); // signature line
+      doc.save('ILAMAI_invoice_'+invDate+'.pdf');
+    });
+
+    // Receipt for selected (we'll prompt for a name or pick last added)
+    el('btnReceiptPDF').addEventListener('click', ()=>{
+      const selName = prompt('Enter client name to generate receipt (exact match) or leave blank for last entry');
+      let item;
+      if(selName){ item = dataset.slice().reverse().find(d=>d.name.toLowerCase()===selName.toLowerCase()); }
+      if(!item) item = dataset[dataset.length-1];
+      if(!item) return alert('No entries available');
+      const { jsPDF } = window.jspdf; const doc = new jsPDF();
+      const dateNow = el('invoiceDate').value || new Date().toISOString().slice(0,10);
+      doc.setFontSize(14); doc.text('ILAMAI BADMINTON ARENA',14,18);
+      doc.setFontSize(10); doc.text('Address: VM CHATRAM, TIRUNELVELI',14,24);
+      doc.setFontSize(12); doc.text('Receipt',14,34);
+      doc.setFontSize(10);
+      doc.text('Date: '+dateNow,14,44);
+      doc.text('Name: '+item.name,14,52);
+      doc.text('Category: '+niceType(item.type),14,60);
+      doc.text('Timing: '+(item.timing||''),14,68);
+      doc.text('Court: '+(item.court||''),14,76);
+      doc.text('Hours: '+(item.hours||0),14,84);
+      doc.text('Amount Paid: ₹'+(item.fee||0),14,92);
+      doc.text('Paid: '+(item.paid? 'Yes':'No'),14,100);
+
+      doc.text('Owner Signature:',14,120);
+      doc.line(50,119,160,119);
+      doc.save('ILAMAI_receipt_'+(item.name.replace(/\s+/g,'_'))+'.pdf');
+    });
+
+    // Helpers
+    function niceType(t){ if(t==='member') return 'Member'; if(t==='student_beginner') return 'Student (Beginner)'; if(t==='student_advanced') return 'Student (Advanced)'; if(t==='guest') return 'Guest'; return t }
+
+    // on load recalc and render
+    recalcAll(); render();
+  </script>
+</body>
+</html>
