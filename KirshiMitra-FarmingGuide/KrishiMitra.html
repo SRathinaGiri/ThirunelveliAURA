@@ -1,730 +1,623 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krishi Mitra - Your Farming Guide</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 3px solid #e9ecef;
-            overflow-x: auto;
-        }
-
-        .nav-tab {
-            padding: 18px 30px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 16px;
-            font-weight: 600;
-            color: #555;
-            transition: all 0.3s;
-            white-space: nowrap;
-            flex: 1;
-        }
-
-        .nav-tab:hover {
-            background: #e9ecef;
-        }
-
-        .nav-tab.active {
-            background: white;
-            color: #27ae60;
-            border-bottom: 3px solid #27ae60;
-        }
-
-        .content {
-            padding: 30px;
-            min-height: 500px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .crop-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .crop-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 15px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .crop-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            border-color: #27ae60;
-        }
-
-        .crop-card h3 {
-            color: #27ae60;
-            margin-bottom: 10px;
-            font-size: 1.4em;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: 2px solid #dee2e6;
-            border-radius: 50px;
-            margin-bottom: 20px;
-        }
-
-        .detail-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-        }
-
-        .detail-section h2 {
-            color: #27ae60;
-            margin-bottom: 15px;
-        }
-
-        .process-step {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border-left: 4px solid #27ae60;
-        }
-
-        .budget-table {
-            width: 100%;
-            background: white;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        .budget-table th, .budget-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .budget-table th {
-            background: #27ae60;
-            color: white;
-        }
-
-        .back-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-
-        .calculator {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-        }
-
-        .input-group {
-            margin: 15px 0;
-        }
-
-        .input-group label {
-            display: block;
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-
-        .calc-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 15px;
-        }
-
-        .result-box {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .soil-guide {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .soil-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            border-top: 4px solid #e67e22;
-        }
-
-        .reminder-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            border-left: 5px solid #3498db;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .reminder-card.urgent {
-            border-left-color: #e74c3c;
-        }
-
-        @media (max-width: 768px) {
-            .crop-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krishi Mitra</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .header { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; padding: 30px; text-align: center; border-radius: 20px 20px 0 0; position: relative; }
+    .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+    .user-info { position: absolute; top: 15px; right: 20px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 0.9em; display: none; }
+    .content { padding: 40px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { color: #27ae60; text-align: center; margin-bottom: 20px; font-size: 2em; }
+    .login-box { max-width: 450px; margin: 0 auto; text-align: center; }
+    .login-box h2 { margin-bottom: 30px; }
+    .login-box p { color: #666; margin-bottom: 30px; font-size: 1.1em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+    .card { background: white; border: 3px solid #ddd; padding: 25px; border-radius: 15px; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); border-color: #27ae60; }
+    .card.selected { border-color: #27ae60; background: #d4edda; border-width: 5px; }
+    .card h3 { color: #27ae60; margin-bottom: 12px; font-size: 1.4em; }
+    .card p { color: #666; line-height: 1.6; }
+    .checkmark { position: absolute; top: 10px; right: 10px; background: #27ae60; color: white; width: 30px; height: 30px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; }
+    .card.selected .checkmark { display: flex; }
+    .btn { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; border: none; padding: 18px 40px; border-radius: 50px; cursor: pointer; font-size: 18px; font-weight: 600; margin: 20px 10px; width: 100%; max-width: 400px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3); }
+    .btn-back { background: #6c757d; width: auto; }
+    .button-group { text-align: center; margin-top: 30px; }
+    .input-group { margin: 25px 0; text-align: left; }
+    .input-group label { display: block; color: #2c3e50; font-weight: 600; margin-bottom: 10px; font-size: 1.1em; }
+    .input-group input, .input-group select { width: 100%; padding: 15px; border: 3px solid #ddd; border-radius: 10px; font-size: 16px; }
+    .input-group input:focus, .input-group select:focus { outline: none; border-color: #27ae60; box-shadow: 0 0 10px rgba(39,174,96,0.2); }
+    .input-group small { color: #666; font-size: 0.9em; margin-top: 5px; display: block; }
+    .info-box { background: #f8f9fa; border-radius: 15px; padding: 30px; margin: 25px 0; }
+    .info-box h3 { color: #27ae60; margin-bottom: 20px; font-size: 1.6em; }
+    .crop-section { background: white; border-radius: 15px; padding: 25px; margin: 20px 0; border: 3px solid #27ae60; }
+    .crop-section h4 { color: #27ae60; font-size: 1.5em; margin-bottom: 15px; }
+    .step { background: white; padding: 18px; margin: 15px 0; border-radius: 12px; border-left: 6px solid #27ae60; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+    .budget-row { background: white; padding: 18px; margin: 12px 0; border-radius: 12px; display: flex; justify-content: space-between; box-shadow: 0 3px 8px rgba(0,0,0,0.08); font-size: 1.1em; }
+    .budget-row.total { background: #27ae60; color: white; font-weight: bold; font-size: 1.4em; }
+    .reminder { background: white; border-radius: 15px; padding: 22px; margin: 18px 0; border-left: 6px solid #3498db; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .reminder.urgent { border-left-color: #e74c3c; background: #fff5f5; }
+    .alert { background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 18px; margin: 20px 0; color: #856404; }
+    .success { background: #d4edda; border: 2px solid #28a745; border-radius: 12px; padding: 18px; margin: 20px 0; color: #155724; text-align: center; }
+    .selected-crops { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 15px; margin: 20px 0; color: #0d47a1; }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .content { padding: 25px; } }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌾 कृषि मित्र - Krishi Mitra</h1>
-            <p>Your Complete Farming Guide for Success. Developed by ANTONEY WINSON</p>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('crops')">🌱 All Crops</button>
-            <button class="nav-tab" onclick="showTab('budget')">💰 Budget Calculator</button>
-            <button class="nav-tab" onclick="showTab('soil')">🌍 Soil Guide</button>
-            <button class="nav-tab" onclick="showTab('reminders')">⏰ Daily Reminders</button>
-        </div>
-
-        <div class="content">
-            <div id="crops" class="tab-content active">
-                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search for crops..." onkeyup="searchCrops()">
-                <div id="cropList" class="crop-grid"></div>
-                <div id="cropDetail" style="display: none;"></div>
-            </div>
-
-            <div id="budget" class="tab-content">
-                <h2 style="color: #27ae60;">💰 Farming Budget Calculator</h2>
-                <div class="calculator">
-                    <div class="input-group">
-                        <label>Select Crop:</label>
-                        <select id="budgetCrop">
-                            <option value="">Choose a crop...</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Land Area (Square Meters):</label>
-                        <input type="number" id="landArea" placeholder="Enter area" min="1">
-                    </div>
-                    <button class="calc-btn" onclick="calculateBudget()">Calculate Budget</button>
-                    <div id="budgetResult"></div>
-                </div>
-            </div>
-
-            <div id="soil" class="tab-content">
-                <h2 style="color: #27ae60;">🌍 Soil Type Guide</h2>
-                <div class="soil-guide" id="soilGuide"></div>
-            </div>
-
-            <div id="reminders" class="tab-content">
-                <h2 style="color: #27ae60;">⏰ Your Daily Farming Reminders</h2>
-                <div id="reminderList"></div>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>🌾 कृषि मित्र - Krishi Mitra</h1>
+      <p>Complete Guide - Crops & All Vegetables of India by ANTONEY WINSON</p>
+      <div class="user-info" id="userInfo"></div>
     </div>
+    <div class="content">
+      <!-- p0: Login -->
+      <div id="p0" class="page active">
+        <div class="login-box">
+          <h2>नमस्ते किसान भाई! 🙏</h2>
+          <p>Welcome to your complete farming guide</p>
+          <div class="input-group">
+            <label>👤 Your Name: *</label>
+            <input type="text" id="fname" placeholder="Enter your name">
+          </div>
+          <div class="input-group">
+            <label>📱 Mobile Number:</label>
+            <input type="tel" id="fphone" placeholder="10 digit (optional)" maxlength="10">
+            <small>Optional - for alerts</small>
+          </div>
+          <div class="input-group">
+            <label>📍 State: *</label>
+            <select id="fstate">
+              <option value="">Select state</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="West Bengal">West Bengal</option>
+            </select>
+          </div>
+          <button class="btn" onclick="login()">Start Journey →</button>
+        </div>
+      </div>
 
-    <script>
-        var crops = [
-            {
-                name: "Rice",
-                hindi: "धान",
-                season: "Kharif",
-                duration: "120-150 days",
-                soil: "Clayey loam soil",
-                steps: [
-                    "Plough field 2-3 times and flood with water",
-                    "Choose varieties like Basmati, IR-36",
-                    "Sow seeds in nursery beds",
-                    "Transplant after 25-30 days",
-                    "Maintain 5-10 cm standing water",
-                    "Apply NPK fertilizer 120:60:60 kg/hectare",
-                    "Remove weeds within 20 days",
-                    "Watch for pests, apply neem oil",
-                    "Harvest when 80% grains turn golden"
-                ],
-                budget: {seeds: 0.5, fertilizer: 2, pesticides: 1, labor: 3, irrigation: 1.5, total: 8},
-                reminders: [
-                    {day: 1, task: "Prepare land and nursery beds", urgent: true},
-                    {day: 25, task: "Transplant rice seedlings", urgent: true},
-                    {day: 40, task: "First weeding and fertilizer"},
-                    {day: 60, task: "Check for pests"},
-                    {day: 120, task: "Prepare for harvesting", urgent: true}
-                ]
-            },
-            {
-                name: "Wheat",
-                hindi: "गेहूं",
-                season: "Rabi",
-                duration: "120-130 days",
-                soil: "Well-drained loamy soil",
-                steps: [
-                    "Deep ploughing followed by harrowing",
-                    "Use certified seeds like HD-2967",
-                    "Treat seeds with fungicide",
-                    "Sow at 5 cm depth, 20 cm spacing",
-                    "First irrigation after 20-25 days",
-                    "Apply 120:60:40 NPK kg/hectare",
-                    "Apply herbicide within 30 days",
-                    "Watch for rust diseases",
-                    "Harvest when moisture is 20-25%"
-                ],
-                budget: {seeds: 0.4, fertilizer: 1.8, pesticides: 0.8, labor: 2.5, irrigation: 1, total: 6.5},
-                reminders: [
-                    {day: 1, task: "Start sowing wheat", urgent: true},
-                    {day: 20, task: "First irrigation - Crown Root stage", urgent: true},
-                    {day: 45, task: "Second irrigation and weed control"},
-                    {day: 80, task: "Irrigation during flowering", urgent: true},
-                    {day: 120, task: "Check moisture and harvest", urgent: true}
-                ]
-            },
-            {
-                name: "Cotton",
-                hindi: "कपास",
-                season: "Kharif",
-                duration: "150-180 days",
-                soil: "Black cotton soil",
-                steps: [
-                    "Deep ploughing in summer",
-                    "Treat seeds with fungicide",
-                    "Sow 2-3 seeds at 3-4 cm depth",
-                    "Keep one healthy plant per hill",
-                    "First irrigation 3-4 weeks after sowing",
-                    "Apply 100:50:50 NPK kg/hectare",
-                    "Watch for bollworms, use Bt spray",
-                    "Remove unwanted branches",
-                    "Pick cotton when bolls open fully"
-                ],
-                budget: {seeds: 0.6, fertilizer: 2.5, pesticides: 2, labor: 4, irrigation: 1.5, total: 10.6},
-                reminders: [
-                    {day: 1, task: "Sow cotton seeds", urgent: true},
-                    {day: 15, task: "Thin plants to one per spot"},
-                    {day: 60, task: "Monitor for bollworm", urgent: true},
-                    {day: 150, task: "Start first cotton picking", urgent: true}
-                ]
-            },
-            {
-                name: "Maize",
-                hindi: "मक्का",
-                season: "Kharif & Rabi",
-                duration: "80-110 days",
-                soil: "Well-drained loamy soil",
-                steps: [
-                    "Plough and harrow for fine tilth",
-                    "Choose hybrids like NK-6240",
-                    "Sow 2 seeds at 5 cm depth",
-                    "Thin to one plant after 15 days",
-                    "First irrigation at 15-20 days",
-                    "Apply 120:60:40 NPK kg/hectare",
-                    "First weeding at 20-25 days",
-                    "Watch for stem borers",
-                    "Harvest when kernels are hard"
-                ],
-                budget: {seeds: 0.7, fertilizer: 2, pesticides: 1, labor: 2.8, irrigation: 1.2, total: 7.7},
-                reminders: [
-                    {day: 1, task: "Sow maize seeds", urgent: true},
-                    {day: 15, task: "Thin plants and irrigate"},
-                    {day: 45, task: "Fertilizer before tasseling", urgent: true},
-                    {day: 90, task: "Monitor for harvest", urgent: true}
-                ]
-            },
-            {
-                name: "Chickpea",
-                hindi: "चना",
-                season: "Rabi",
-                duration: "100-120 days",
-                soil: "Loamy to clay loam",
-                steps: [
-                    "Deep ploughing and harrowing",
-                    "Use varieties like Pusa-256",
-                    "Treat with Rhizobium culture",
-                    "Sow at 5-7 cm depth",
-                    "First irrigation at flowering",
-                    "Apply 20:40:20 NPK kg/hectare",
-                    "Hand weeding at 30 days",
-                    "Watch for pod borer",
-                    "Harvest when pods turn brown"
-                ],
-                budget: {seeds: 0.8, fertilizer: 1.2, pesticides: 0.8, labor: 2, irrigation: 0.8, total: 5.6},
-                reminders: [
-                    {day: 1, task: "Sow chickpea seeds", urgent: true},
-                    {day: 45, task: "Irrigation at flowering", urgent: true},
-                    {day: 110, task: "Prepare for harvest", urgent: true}
-                ]
-            },
-            {
-                name: "Tomato",
-                hindi: "टमाटर",
-                season: "Year-round",
-                duration: "90-120 days",
-                soil: "Sandy loam with organic matter",
-                steps: [
-                    "Sow seeds in nursery beds",
-                    "Transplant after 4-5 weeks",
-                    "Provide bamboo stakes for support",
-                    "Regular light irrigation",
-                    "Apply 150:75:100 NPK kg/hectare",
-                    "Apply organic mulch",
-                    "Remove side shoots",
-                    "Watch for fruit borers",
-                    "Pick when fully colored but firm"
-                ],
-                budget: {seeds: 1, fertilizer: 3, pesticides: 2, labor: 4, irrigation: 2, total: 12},
-                reminders: [
-                    {day: 1, task: "Sow tomato seeds", urgent: true},
-                    {day: 35, task: "Transplant seedlings", urgent: true},
-                    {day: 65, task: "Prune and check pests"},
-                    {day: 95, task: "Start harvesting", urgent: true}
-                ]
-            },
-            {
-                name: "Potato",
-                hindi: "आलू",
-                season: "Rabi",
-                duration: "90-120 days",
-                soil: "Sandy loam",
-                steps: [
-                    "Deep ploughing with ridges",
-                    "Use disease-free tubers 30-40g",
-                    "Sprout tubers before planting",
-                    "Plant 5-7 cm deep on ridges",
-                    "Earth up after 25-30 days",
-                    "Apply 150:100:100 NPK kg/hectare",
-                    "Regular irrigation",
-                    "Watch for late blight",
-                    "Harvest when leaves die"
-                ],
-                budget: {seeds: 2.5, fertilizer: 2.5, pesticides: 1.5, labor: 3.5, irrigation: 1.5, total: 11.5},
-                reminders: [
-                    {day: 1, task: "Plant potato tubers", urgent: true},
-                    {day: 28, task: "Earth up operation", urgent: true},
-                    {day: 60, task: "Critical irrigation", urgent: true},
-                    {day: 100, task: "Prepare for harvest", urgent: true}
-                ]
-            },
-            {
-                name: "Onion",
-                hindi: "प्याज",
-                season: "Rabi & Kharif",
-                duration: "120-150 days",
-                soil: "Fertile loamy soil",
-                steps: [
-                    "Sow seeds in raised beds",
-                    "Transplant pencil-thick seedlings",
-                    "Light frequent irrigation",
-                    "Apply 100:50:50 NPK kg/hectare",
-                    "Regular weeding for 45 days",
-                    "Mulch between rows",
-                    "Monitor for thrips",
-                    "Stop irrigation 10 days before harvest",
-                    "Harvest when tops fall over"
-                ],
-                budget: {seeds: 0.5, fertilizer: 2.2, pesticides: 1.2, labor: 3.8, irrigation: 1.5, total: 9.2},
-                reminders: [
-                    {day: 1, task: "Sow onion seeds", urgent: true},
-                    {day: 50, task: "Transplant seedlings", urgent: true},
-                    {day: 140, task: "Stop irrigation", urgent: true},
-                    {day: 150, task: "Harvest onions", urgent: true}
-                ]
-            }
-        ];
+      <!-- p1: Soil -->
+      <div id="p1" class="page">
+        <h2>Select Soil Type</h2>
+        <div class="alert"><strong>💡 Soil Types:</strong> Alluvial, Black, Red, Laterite, Desert, Mountain</div>
+        <div class="grid" id="sg"></div>
+        <div class="button-group"><button class="btn" onclick="gp2()">Next →</button></div>
+      </div>
 
-        var soilTypes = [
-            {
-                name: "Alluvial Soil",
-                description: "Most fertile soil found in river valleys",
-                crops: "Rice, Wheat, Sugarcane, Cotton, Maize",
-                region: "Ganga-Brahmaputra plains, Coastal areas"
-            },
-            {
-                name: "Black Soil",
-                description: "Rich in iron, lime, and clay - holds moisture well",
-                crops: "Cotton, Wheat, Jowar, Linseed, Tobacco",
-                region: "Maharashtra, Gujarat, Madhya Pradesh"
-            },
-            {
-                name: "Red Soil",
-                description: "Rich in iron, porous and friable",
-                crops: "Groundnut, Millets, Tobacco, Cotton",
-                region: "Tamil Nadu, Karnataka, Andhra Pradesh"
-            },
-            {
-                name: "Laterite Soil",
-                description: "High in iron and aluminum, acidic",
-                crops: "Tea, Coffee, Cashew, Rubber",
-                region: "Kerala, Karnataka, Tamil Nadu hills"
-            },
-            {
-                name: "Desert Soil",
-                description: "Sandy, low in moisture and organic matter",
-                crops: "Bajra, Pulses, Barley with irrigation",
-                region: "Rajasthan, Gujarat, Haryana"
-            },
-            {
-                name: "Mountain Soil",
-                description: "Varies with altitude, good for horticulture",
-                crops: "Fruits, Tea, Coffee, Spices",
-                region: "Himalayan regions, Western Ghats"
-            }
-        ];
+      <!-- p2: Crops -->
+      <div id="p2" class="page">
+        <h2>Select Crops & Vegetables</h2>
+        <div class="success"><strong>✅ Select multiple items</strong></div>
+        <div class="selected-crops" id="si" style="display:none;"><strong>Selected:</strong> <span id="sl"></span></div>
+        <div class="grid" id="cg"></div>
+        <div class="button-group"><button class="btn btn-back" onclick="gp1()">← Back</button><button class="btn" onclick="gp3()">Next →</button></div>
+      </div>
 
-        var currentCrop = null;
+      <!-- p3: Area -->
+      <div id="p3" class="page">
+        <h2>Land Area for Each</h2>
+        <div class="alert"><strong>📐</strong> 1 Acre = 4,047 sqm | 1 Hectare = 10,000 sqm</div>
+        <div id="ai"></div>
+        <div class="button-group"><button class="btn btn-back" onclick="gp2()">← Back</button><button class="btn" onclick="gp4()">See Guide →</button></div>
+      </div>
 
-        function init() {
-            displayCrops();
-            populateBudgetDropdown();
-            displaySoilGuide();
-            displayReminders();
+      <!-- p4: Guide + Budget + Links -->
+      <div id="p4" class="page">
+        <h2>Complete Guide</h2>
+        <div class="success"><strong>🎉 Guide ready!</strong></div>
+        <div id="ag"></div>
+        <div class="info-box"><h3>💰 Total Budget</h3><div id="tb"></div></div>
+        <div class="info-box"><h3>⏰ Reminders</h3><button class="btn" onclick="en()">🔔 Enable</button><div id="ar"></div></div>
+        <div class="info-box"><h3>🌐 Useful links</h3><div id="links"></div></div>
+        <div class="button-group"><button class="btn" onclick="rs()">Start Over 🔄</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- Data -----
+    var d = { n:'', ph:'', st:'', s:'', c:[], a:{} };
+
+    var so = {
+      alluvial:{n:'Alluvial Soil',de:'Fertile valleys',cr:['Rice','Wheat','Maize','Sugarcane','Tomato','Potato','Onion','Cabbage','Cauliflower','Brinjal','Okra','Cucumber','Pumpkin','Spinach','Coriander','Carrot','Radish','Peas','Beans','Lettuce','Methi']},
+      black:{n:'Black Soil',de:'Cotton belt',cr:['Cotton','Wheat','Chickpea','Groundnut','Tomato','Brinjal','Chilli','Onion','Garlic','Okra','Cabbage','Cauliflower','Coriander']},
+      red:{n:'Red Soil',de:'Well-drained',cr:['Groundnut','Cotton','Maize','Tomato','Potato','Chilli','Brinjal','Beans','Carrot','Radish','Sweet Potato']},
+      laterite:{n:'Laterite Soil',de:'High rainfall',cr:['Tea','Coffee','Cashew','Ginger','Turmeric','Tapioca','Pineapple','Banana','Papaya']},
+      desert:{n:'Desert Soil',de:'Sandy',cr:['Bajra','Cotton','Carrot','Radish','Turnip','Cluster Beans']},
+      mountain:{n:'Mountain Soil',de:'Forest soil',cr:['Tea','Coffee','Potato','Cabbage','Cauliflower','Peas','Beans','Ginger','Turmeric','Mushroom']}
+    };
+
+    var cr = {
+      Rice:{h:'धान',st:['Plough 2-3 times','Choose varieties','Prepare nursery','Transplant at 25-30 days','Maintain water 5-10cm','Apply NPK 120:60:60','Remove weeds','Monitor pests','Harvest when golden'],bu:{s:0.5,f:2,p:1,l:3,w:1.5,t:8},ta:[{d:1,t:'Prepare nursery',u:1},{d:25,t:'Transplant',u:1},{d:120,t:'Harvest!',u:1}]},
+      Wheat:{h:'गेहूं',st:['Deep ploughing','Use certified seeds','Treat seeds','Sow at 5cm','Irrigate after 20 days','Apply NPK','Weed control','Watch rust','Harvest'],bu:{s:0.4,f:1.8,p:0.8,l:2.5,w:1,t:6.5},ta:[{d:1,t:'Sow',u:1},{d:20,t:'First irrigation',u:1},{d:120,t:'Harvest!',u:1}]},
+      Cotton:{h:'कपास',st:['Summer ploughing','Treat seeds','Sow 2-3 seeds','Thin to 1 plant','Irrigate','Apply NPK','Monitor bollworms','Prune','Pick when open'],bu:{s:0.6,f:2.5,p:2,l:4,w:1.5,t:10.6},ta:[{d:1,t:'Sow',u:1},{d:60,t:'Check pests',u:1},{d:150,t:'Picking',u:1}]},
+      Maize:{h:'मक्का',st:['Fine tilth','Hybrids','Sow 2 seeds','Thin after 15 days','Irrigate','Apply NPK','Weed','Watch borers','Harvest'],bu:{s:0.7,f:2,p:1,l:2.8,w:1.2,t:7.7},ta:[{d:1,t:'Sow',u:1},{d:45,t:'Fertilizer',u:1},{d:90,t:'Harvest!',u:1}]},
+      Chickpea:{h:'चना',st:['Deep ploughing','Good variety','Rhizobium','Sow','Irrigate at flowering','Apply NPK','Weed','Watch borer','Harvest'],bu:{s:0.8,f:1.2,p:0.8,l:2,w:0.8,t:5.6},ta:[{d:1,t:'Sow',u:1},{d:45,t:'Irrigate',u:1},{d:110,t:'Harvest!',u:1}]},
+      Groundnut:{h:'मूंगफली',st:['Ridges','Certified seeds','Treatment','Sow','Irrigate','Apply NPK','Earth up','Watch disease','Harvest'],bu:{s:1.5,f:1.5,p:1,l:3,w:1,t:8},ta:[{d:1,t:'Sow',u:1},{d:30,t:'Earth up',u:1},{d:110,t:'Harvest!',u:1}]},
+      Sugarcane:{h:'गन्ना',st:['Deep ploughing','3-bud setts','Treatment','Plant','Irrigation','Apply NPK','Earth up','Weed','Harvest'],bu:{s:3,f:4,p:1.5,l:5,w:2.5,t:16},ta:[{d:1,t:'Plant',u:1},{d:120,t:'Earth up',u:1},{d:360,t:'Harvest!',u:1}]},
+      Tea:{h:'चाय',st:['Slopes','Plant monsoon','Shade','Pruning','Irrigation','Manure','Pest control','Pluck after 3 years','Regular harvest'],bu:{s:5,f:3,p:2,l:6,w:2,t:18},ta:[{d:1,t:'Plant',u:1},{d:365,t:'Care',u:0}]},
+      Coffee:{h:'कॉफ़ी',st:['Shade area','Plant monsoon','Shade','Water','Compost','Pruning','Pest control','Harvest 3-4 years','Pick berries'],bu:{s:6,f:3.5,p:2.5,l:7,w:2,t:21},ta:[{d:1,t:'Plant',u:1},{d:365,t:'Care',u:0}]},
+      Cashew:{h:'काजू',st:['Pits 60cm','Seedlings','Water','Manure','Prune','Pest control','Mulch','Harvest 3 years','Collect nuts'],bu:{s:4,f:2.5,p:2,l:5,w:1.5,t:15},ta:[{d:1,t:'Plant',u:1},{d:365,t:'Care',u:0}]},
+      Bajra:{h:'बाजरा',st:['Plough','Varieties','Sow','Thin','Light irrigation','Minimal fertilizer','Weed','Watch pests','Harvest'],bu:{s:0.3,f:1,p:0.5,l:2,w:0.5,t:4.3},ta:[{d:1,t:'Sow',u:1},{d:80,t:'Harvest!',u:1}]},
+      Tomato:{h:'टमाटर',st:['Nursery beds','Sow, transplant 4 weeks','Spacing 60x45cm','Stakes','Drip irrigation','Apply NPK 150:75:100','Remove shoots','Watch borers','Pick when colored'],bu:{s:1,f:3,p:2,l:4,w:2,t:12},ta:[{d:1,t:'Sow',u:1},{d:35,t:'Transplant',u:1},{d:95,t:'Harvest!',u:1}]},
+      Potato:{h:'आलू',st:['Ridges','Disease-free tubers','Sprout','Plant 5-7cm','Earth up 25-30 days','Apply NPK 150:100:100','Regular irrigation','Watch blight','Harvest'],bu:{s:2.5,f:2.5,p:1.5,l:3.5,w:1.5,t:11.5},ta:[{d:1,t:'Plant',u:1},{d:28,t:'Earth up',u:1},{d:100,t:'Harvest!',u:1}]},
+      Onion:{h:'प्याज',st:['Nursery','Transplant seedlings','Spacing 15x10cm','Light irrigation','Apply NPK 100:50:50','Weed 45 days','Monitor thrips','Stop irrigation 10 days','Harvest'],bu:{s:0.5,f:2.2,p:1.2,l:3.8,w:1.5,t:9.2},ta:[{d:1,t:'Sow',u:1},{d:50,t:'Transplant',u:1},{d:150,t:'Harvest!',u:1}]},
+      Cabbage:{h:'बंदगोभी',st:['Seedbed','Transplant 4 weeks','Spacing 45x45cm','Deep watering','Apply NPK 120:60:60','Earth up','Watch caterpillars','Neem spray','Harvest firm'],bu:{s:0.8,f:2.5,p:1.5,l:3,w:1.8,t:9.6},ta:[{d:1,t:'Sow',u:1},{d:30,t:'Transplant',u:1},{d:90,t:'Harvest!',u:1}]},
+      Cauliflower:{h:'फूलगोभी',st:['Nursery','Transplant 4-5 weeks','Spacing 60x45cm','Regular irrigation','Apply NPK','Tie leaves','Watch aphids','Blanching','Harvest firm'],bu:{s:0.8,f:2.5,p:1.5,l:3.2,w:1.8,t:9.8},ta:[{d:1,t:'Sow',u:1},{d:35,t:'Transplant',u:1},{d:100,t:'Harvest!',u:1}]},
+      Brinjal:{h:'बैंगन',st:['Nursery','Transplant 6 weeks','Spacing 75x60cm','Staking','Apply NPK 100:50:50','Regular irrigation','Watch borer','Remove shoots','Harvest shiny'],bu:{s:0.6,f:2.8,p:2,l:3.5,w:1.8,t:10.7},ta:[{d:1,t:'Sow',u:1},{d:45,t:'Transplant',u:1},{d:120,t:'Harvest!',u:1}]},
+      Chilli:{h:'मिर्च',st:['Nursery','Transplant 6-8 weeks','Spacing 60x45cm','Mulch','Apply NPK 100:50:50','Drip irrigation','Watch thrips','Neem spray','Multiple pickings'],bu:{s:0.5,f:2.5,p:1.8,l:3.5,w:1.5,t:9.8},ta:[{d:1,t:'Sow',u:1},{d:50,t:'Transplant',u:1},{d:90,t:'First pick',u:1}]},
+      Okra:{h:'भिंडी',st:['Direct sowing','2 seeds','Spacing 60x30cm','Thin to 1','Light irrigation','Apply NPK 80:40:40','Weed','Watch mosaic','Harvest tender'],bu:{s:0.6,f:1.8,p:1.2,l:2.8,w:1.2,t:7.6},ta:[{d:1,t:'Sow',u:1},{d:45,t:'First harvest',u:1}]},
+      Cucumber:{h:'खीरा',st:['Beds/mounds','2-3 seeds','Spacing 90x60cm','Trellis','Drip irrigation','Apply NPK 100:50:50','Mulch','Watch mildew','Harvest tender'],bu:{s:0.7,f:2.2,p:1.5,l:3,w:1.8,t:9.2},ta:[{d:1,t:'Sow',u:1},{d:40,t:'Trellis',u:1},{d:50,t:'Harvest',u:1}]},
+      Pumpkin:{h:'कद्दू',st:['Mounds 3-4ft','3-4 seeds','Thin to 2','Space needed','Root irrigation','Apply NPK 80:40:40','Pollination','Watch flies','Harvest mature'],bu:{s:0.8,f:2,p:1.2,l:2.5,w:1.5,t:8},ta:[{d:1,t:'Sow',u:1},{d:100,t:'Harvest!',u:1}]},
+      Spinach:{h:'पालक',st:['Broadcast/lines','Fine tilth','Spacing 20x5cm','Light irrigation','Nitrogen manure','Multiple cuttings','Watch miners','First cut 25-30 days','Every 15 days'],bu:{s:0.3,f:1.5,p:0.8,l:2,w:1,t:5.6},ta:[{d:1,t:'Sow',u:0},{d:30,t:'First cut',u:1}]},
+      Coriander:{h:'धनिया',st:['Broadcast','Fine seedbed','Light irrigation','Compost','Minimal care','Watch aphids','Harvest 40-45 days','Multiple cuts','Before flowering'],bu:{s:0.4,f:1.2,p:0.6,l:1.8,w:0.8,t:4.8},ta:[{d:1,t:'Sow',u:0},{d:40,t:'Harvest',u:1}]},
+      Carrot:{h:'गाजर',st:['Deep loose soil','Direct sowing','Spacing 30x5cm','Thin','Light irrigation','Apply NPK 50:50:50','Weed carefully','Watch blight','Harvest 90-100 days'],bu:{s:0.5,f:1.8,p:1,l:2.5,w:1.2,t:7},ta:[{d:1,t:'Sow',u:1},{d:20,t:'Thin',u:1},{d:95,t:'Harvest!',u:1}]},
+      Radish:{h:'मूली',st:['Light soil','Direct sowing','Spacing 30x5cm','Fast growing','Frequent irrigation','Compost','Minimal fertilizer','Watch aphids','30-40 days'],bu:{s:0.4,f:1.2,p:0.6,l:1.8,w:0.8,t:4.8},ta:[{d:1,t:'Sow',u:0},{d:35,t:'Harvest!',u:1}]},
+      Peas:{h:'मटर',st:['Well-drained soil','Direct sowing','Spacing 30x5cm','Support for climbers','Light irrigation','Apply NPK 20:60:40','Minimal nitrogen','Watch aphids','Harvest tender'],bu:{s:1,f:1.5,p:0.8,l:2.5,w:1,t:6.8},ta:[{d:1,t:'Sow',u:1},{d:60,t:'First pick',u:1}]},
+      Beans:{h:'बीन्स',st:['Direct sowing','2 seeds per spot','Spacing 45x15cm','Support if climbing','Regular irrigation','Apply NPK 25:50:25','Weed','Watch beetles','Harvest tender'],bu:{s:0.8,f:1.8,p:1,l:2.8,w:1.2,t:7.6},ta:[{d:1,t:'Sow',u:1},{d:50,t:'First harvest',u:1}]},
+      Garlic:{h:'लहसुन',st:['Separate cloves','Plant pointed up','Spacing 15x10cm','Shallow planting','Light irrigation','Apply compost','Minimal care','Watch thrips','Harvest when dry'],bu:{s:1.2,f:1.5,p:0.8,l:2.5,w:1,t:7},ta:[{d:1,t:'Plant',u:1},{d:150,t:'Harvest!',u:1}]},
+      Ginger:{h:'अदरक',st:['Rhizome pieces','Raised beds','Spacing 30x20cm','Shade 50%','Heavy watering','Organic manure','Mulch heavily','Watch rot','Harvest 8 months'],bu:{s:3,f:3,p:1.5,l:4,w:2.5,t:14},ta:[{d:1,t:'Plant',u:1},{d:240,t:'Harvest!',u:1}]},
+      Turmeric:{h:'हल्दी',st:['Rhizome pieces','Raised beds','Spacing 30x20cm','Partial shade','Regular watering','Organic manure','Mulch','Watch rot','Harvest 9 months'],bu:{s:3.5,f:3.2,p:1.5,l:4.5,w:2.8,t:15.5},ta:[{d:1,t:'Plant',u:1},{d:270,t:'Harvest!',u:1}]},
+      Lettuce:{h:'सलाद पत्ता',st:['Seedbed','Transplant 3 weeks','Spacing 30x30cm','Frequent irrigation','Rich compost','Light fertilizer','Watch slugs','Cool season','Harvest leaves'],bu:{s:0.4,f:1.5,p:0.8,l:2,w:1.3,t:6},ta:[{d:1,t:'Sow',u:0},{d:50,t:'Harvest',u:1}]},
+      Methi:{h:'मेथी',st:['Broadcast/lines','Fine tilth','Spacing 20x5cm','Light irrigation','Nitrogen rich','Multiple cuttings','Watch aphids','First cut 25 days','Repeat cutting'],bu:{s:0.3,f:1.2,p:0.6,l:1.5,w:0.8,t:4.4},ta:[{d:1,t:'Sow',u:0},{d:25,t:'First cut',u:1}]},
+      'Sweet Potato':{h:'शकरकंद',st:['Vine cuttings 25cm','Raised ridges','Spacing 60x30cm','Plant slanted','Regular watering','Apply compost','Earth up','Watch weevils','Harvest 4 months'],bu:{s:1.8,f:2,p:1,l:3,w:1.5,t:9.3},ta:[{d:1,t:'Plant vines',u:1},{d:120,t:'Harvest!',u:1}]},
+      Tapioca:{h:'टैपिओका',st:['Stem cuttings 20cm','Plant slanted','Spacing 90x90cm','Drought tolerant','Minimal irrigation','Light fertilizer','Weed initially','Pest resistant','Harvest 8-10 months'],bu:{s:2,f:1.5,p:0.5,l:2.5,w:1,t:7.5},ta:[{d:1,t:'Plant',u:1},{d:270,t:'Harvest!',u:1}]},
+      Pineapple:{h:'अनानास',st:['Suckers/slips','Well-drained beds','Spacing 60x30cm','Shallow planting','Moderate water','Balanced fertilizer','Weed control','Watch mealybugs','Harvest ~18 months'],bu:{s:2.5,f:2,p:1,l:3,w:1.5,t:10.5},ta:[{d:1,t:'Plant',u:1},{d:540,t:'Harvest!',u:1}]},
+      Banana:{h:'केला',st:['Suckers','Spacing 2x2m','Irrigation','Mulch','Fertilization','Propping','Desuckering','Watch wilt','Harvest 10-12 months'],bu:{s:4,f:3,p:2,l:5,w:2.5,t:16.5},ta:[{d:1,t:'Plant',u:1},{d:360,t:'Harvest!',u:1}]},
+      Papaya:{h:'पपीता',st:['Seedlings','Spacing 2x2m','Irrigation','Fertilizer','Male-female plants','Fruit thinning','Watch mites','Harvest 8-12 months'],bu:{s:2.5,f:2,p:1.5,l:3.5,w:1.8,t:11.3},ta:[{d:1,t:'Plant',u:1},{d:300,t:'Harvest!',u:1}]},
+      Turnip:{h:'शलगम',st:['Direct sowing','Spacing 30x10cm','Light irrigation','Thin seedlings','Watch aphids','Harvest 45-60 days'],bu:{s:0.4,f:1,p:0.6,l:1.5,w:0.8,t:4.3},ta:[{d:1,t:'Sow',u:0},{d:50,t:'Harvest',u:1}]},
+      'Cluster Beans':{h:'ग्वार',st:['Direct sowing','Spacing 45x15cm','Light irrigation','Minimal fertilizer','Watch blight','Harvest tender pods'],bu:{s:0.6,f:1.2,p:0.8,l:2,w:1,t:5.6},ta:[{d:1,t:'Sow',u:1},{d:60,t:'Harvest',u:1}]},
+      Mushroom:{h:'मशरूम',st:['Spawn purchase','Substrate prep','Maintain humidity','Clean environment','Harvest flushes'],bu:{s:2,f:1.5,p:1,l:2.5,w:1,t:8},ta:[{d:1,t:'Set up',u:1}]}
+    };
+
+    // ----- State-specific links -----
+    const stateLinks = {
+      "Andhra Pradesh": {
+        buy: [
+          { name: "AP Agros (Govt. agri inputs)", url: "https://apagros.ap.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "AP Markfed", url: "https://apmarkfed.ap.gov.in" }
+        ]
+      },
+      "Bihar": {
+        buy: [
+          { name: "Bihar Agri Dept", url: "https://state.bihar.gov.in/agr" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "Bihar State Agricultural Marketing Board", url: "http://www.bsambltd.com" }
+        ]
+      },
+      "Gujarat": {
+        buy: [
+          { name: "Gujarat Seed Certification", url: "https://agri.gujarat.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "Gujarat State Agricultural Marketing Board", url: "https://gsamb.gujarat.gov.in" }
+        ]
+      },
+      "Haryana": {
+        buy: [
+          { name: "Haryana Seeds Development Corp", url: "https://haryanaseeds.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "Haryana State Agricultural Marketing Board", url: "https://hsamb.gov.in" }
+        ]
+      },
+      "Karnataka": {
+        buy: [
+          { name: "KSSC (Karnataka State Seeds)", url: "https://www.krishimaratavahini.kar.nic.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "Karnataka Agricultural Marketing", url: "https://www.krishimaratavahini.kar.nic.in" }
+        ]
+      },
+      "Kerala": {
+        buy: [
+          { name: "Kerala Agro Industries", url: "https://keralaagroindustries.com" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "Horticorp Kerala", url: "https://horticorp.com" }
+        ]
+      },
+      "Madhya Pradesh": {
+        buy: [
+          { name: "MP Agro", url: "https://mpagro.org" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "eNAM", url: "https://enam.gov.in" },
+          { name: "MP State Agricultural Marketing Board", url: "https://www.mpsamb.com" }
+        ]
+      },
+      "Maharashtra": {
+        buy: [
+          { name: "MAHA-Agri Dept", url: "https://mahapariksha.gov.in/Agri" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "MSAMB", url: "https://www.msamb.com" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "Punjab": {
+        buy: [
+          { name: "Punjab Agro", url: "https://punjabagro.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "Punjab Mandi Board", url: "https://mandiboard.nic.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "Rajasthan": {
+        buy: [
+          { name: "RAJFED/RSAMB resources", url: "https://agriculture.rajasthan.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "RSAMB", url: "https://rsamb.rajasthan.gov.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "Tamil Nadu": {
+        buy: [
+          { name: "TNAU Agritech Portal", url: "https://agritech.tnau.ac.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "TN Agricultural Marketing Board", url: "https://www.agrimark.tn.gov.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "Telangana": {
+        buy: [
+          { name: "TS Agros", url: "https://tsagros.telangana.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "Telangana MEPMA/Marketing", url: "https://tsmarketing.telangana.gov.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "Uttar Pradesh": {
+        buy: [
+          { name: "UP Agro", url: "https://upagro.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "UP Mandi Parishad", url: "http://upmandiparishad.upsdc.gov.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      },
+      "West Bengal": {
+        buy: [
+          { name: "WB Agro", url: "https://wbagrimarketingboard.gov.in" },
+          { name: "IFFCO eBazar", url: "https://iffcobazar.in" },
+          { name: "BigHaat", url: "https://www.bighaat.com" }
+        ],
+        sell: [
+          { name: "WB State Marketing Board", url: "https://wbagrimarketingboard.gov.in" },
+          { name: "eNAM", url: "https://enam.gov.in" }
+        ]
+      }
+    };
+
+    // ----- Helpers -----
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function fmtMoney(x) { return '₹ ' + x.toFixed(2) + 'k'; }
+    function cssId(s) { return s.replace(/\s+/g,'_'); }
+    function areaToAcre(val, unit) {
+      const v = parseFloat(val || 0);
+      if (!v) return 0;
+      return unit === 'hectare' ? v * 2.47105 : v;
+    }
+
+    function renderSoilGrid() {
+      const sg = document.getElementById('sg');
+      sg.innerHTML = '';
+      Object.keys(so).forEach(key => {
+        const s = so[key];
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.soil = key;
+        card.innerHTML = `
+          <div class="checkmark">✓</div>
+          <h3>${s.n}</h3>
+          <p>${s.de}</p>
+        `;
+        card.addEventListener('click', () => {
+          document.querySelectorAll('#sg .card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          d.s = key;
+        });
+        sg.appendChild(card);
+      });
+    }
+
+    function renderCropGrid() {
+      const cg = document.getElementById('cg');
+      cg.innerHTML = '';
+      const si = document.getElementById('si');
+      const sl = document.getElementById('sl');
+      const soilKey = d.s;
+      const available = soilKey ? so[soilKey].cr : Object.keys(cr);
+
+      available.forEach(name => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.crop = name;
+        const hindi = cr[name]?.h || name;
+        card.innerHTML = `
+          <div class="checkmark">✓</div>
+          <h3>${name} (${hindi})</h3>
+          <p>Select to include in your plan</p>
+        `;
+        card.addEventListener('click', () => {
+          const idx = d.c.indexOf(name);
+          if (idx >= 0) {
+            d.c.splice(idx,1);
+            card.classList.remove('selected');
+          } else {
+            d.c.push(name);
+            card.classList.add('selected');
+          }
+          if (d.c.length) {
+            si.style.display = 'block';
+            sl.textContent = d.c.join(', ');
+          } else {
+            si.style.display = 'none';
+            sl.textContent = '';
+          }
+        });
+        cg.appendChild(card);
+      });
+    }
+
+    function renderAreaInputs() {
+      const ai = document.getElementById('ai');
+      ai.innerHTML = '';
+      if (!d.c.length) {
+        ai.innerHTML = '<div class="alert"><strong>ℹ️</strong> Please select at least one crop.</div>';
+        return;
+      }
+      d.a = d.a || {};
+      d.c.forEach(name => {
+        const wrap = document.createElement('div');
+        wrap.className = 'input-group';
+        wrap.innerHTML = `
+          <label><strong>${name}</strong> — Area per crop:</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="number" min="0" step="0.01" id="area_${cssId(name)}" placeholder="Enter area" value="${d.a[name]?.val || ''}" style="flex:1;">
+            <select id="unit_${cssId(name)}" style="max-width:150px;">
+              <option value="acre" ${d.a[name]?.unit === 'acre' ? 'selected' : ''}>Acre</option>
+              <option value="hectare" ${d.a[name]?.unit === 'hectare' ? 'selected' : ''}>Hectare</option>
+            </select>
+          </div>
+          <small>Tip: 1 Acre = 0.4047 Hectare</small>
+        `;
+        ai.appendChild(wrap);
+      });
+    }
+
+    function renderGuide() {
+      const ag = document.getElementById('ag');
+      const tb = document.getElementById('tb');
+      const ar = document.getElementById('ar');
+      ag.innerHTML = '';
+      tb.innerHTML = '';
+      ar.innerHTML = '';
+
+      let totalBudget = 0;
+
+      d.c.forEach(name => {
+        const info = cr[name];
+        if (!info) return;
+
+        const area = d.a[name] ? areaToAcre(d.a[name].val, d.a[name].unit) : 0;
+        const bu = info.bu || {};
+        const perAcre = bu.t || 0;
+        const cropBudget = perAcre * area;
+        totalBudget += cropBudget;
+
+        const section = document.createElement('div');
+        section.className = 'crop-section';
+        section.innerHTML = `
+          <h4>${name} (${info.h || name}) — Area: ${area.toFixed(2)} Acre</h4>
+          <div class="step"><strong>Steps:</strong> ${info.st.map(s => `<div>• ${s}</div>`).join('')}</div>
+          <div class="step"><strong>Budget per acre (k):</strong>
+            <div class="budget-row"><span><strong>Seeds</strong></span><span>${fmtMoney(bu.s||0)}</span></div>
+            <div class="budget-row"><span><strong>Fertilizer</strong></span><span>${fmtMoney(bu.f||0)}</span></div>
+            <div class="budget-row"><span><strong>Pesticide</strong></span><span>${fmtMoney(bu.p||0)}</span></div>
+            <div class="budget-row"><span><strong>Labour</strong></span><span>${fmtMoney(bu.l||0)}</span></div>
+            <div class="budget-row"><span><strong>Water/Irrigation</strong></span><span>${fmtMoney(bu.w||0)}</span></div>
+            <div class="budget-row total"><span>Total / acre</span><span>${fmtMoney(bu.t||0)}</span></div>
+          </div>
+          <div class="step"><strong>Crop budget (k):</strong> ${fmtMoney(cropBudget)}</div>
+        `;
+        ag.appendChild(section);
+
+        if (Array.isArray(info.ta)) {
+          info.ta.forEach(t => {
+            const r = document.createElement('div');
+            r.className = 'reminder' + (t.t.toLowerCase().includes('harvest') ? ' urgent':'');
+            r.innerHTML = `<strong>Day ${t.d}:</strong> ${t.t}`;
+            ar.appendChild(r);
+          });
         }
+      });
 
-        function showTab(tabName) {
-            var tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(function(tab) {
-                tab.classList.remove('active');
-            });
-            
-            var buttons = document.querySelectorAll('.nav-tab');
-            buttons.forEach(function(btn) {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
+      tb.innerHTML = `<div class="budget-row total"><span>Total planned budget</span><span>${fmtMoney(totalBudget)}</span></div>`;
+    }
 
-        function displayCrops() {
-            var html = '';
-            for (var i = 0; i < crops.length; i++) {
-                html += '<div class="crop-card" onclick="showCropDetail(' + i + ')">';
-                html += '<h3>' + crops[i].name + ' (' + crops[i].hindi + ')</h3>';
-                html += '<p>Season: ' + crops[i].season + '</p>';
-                html += '<p>Duration: ' + crops[i].duration + '</p>';
-                html += '</div>';
-            }
-            document.getElementById('cropList').innerHTML = html;
-        }
+    function renderLinks() {
+      const container = document.getElementById('links');
+      container.innerHTML = '';
+      const st = d.st;
+      if (!st) return;
 
-        function searchCrops() {
-            var input = document.getElementById('searchBox').value.toLowerCase();
-            var cards = document.querySelectorAll('.crop-card');
-            
-            cards.forEach(function(card) {
-                var text = card.textContent.toLowerCase();
-                if (text.indexOf(input) > -1) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
+      const block = document.createElement('div');
+      if (stateLinks[st]) {
+        const buyList = stateLinks[st].buy.map(l => `<li><a href="${l.url}" target="_blank" rel="noopener">${l.name}</a></li>`).join('');
+        const sellList = stateLinks[st].sell.map(l => `<li><a href="${l.url}" target="_blank" rel="noopener">${l.name}</a></li>`).join('');
+        block.innerHTML = `
+          <p><strong>State:</strong> ${st}</p>
+          <p><strong>Buy inputs:</strong></p>
+          <ul>${buyList}</ul>
+          <p><strong>Sell produce:</strong></p>
+          <ul>${sellList}</ul>
+        `;
+      } else {
+        block.innerHTML = `
+          <p>No specific links found for ${st}. Try national platforms:</p>
+          <ul>
+            <li><a href="https://enam.gov.in" target="_blank" rel="noopener">eNAM</a></li>
+            <li><a href="https://iffcobazar.in" target="_blank" rel="noopener">IFFCO eBazar</a></li>
+            <li><a href="https://www.bighaat.com" target="_blank" rel="noopener">BigHaat</a></li>
+          </ul>
+        `;
+      }
+      container.appendChild(block);
+    }
 
-        function showCropDetail(index) {
-            currentCrop = crops[index];
-            var crop = crops[index];
-            
-            var html = '<button class="back-btn" onclick="backToCrops()">← Back to All Crops</button>';
-            html += '<div class="detail-section">';
-            html += '<h2>' + crop.name + ' (' + crop.hindi + ') - Complete Guide</h2>';
-            html += '<p><strong>Season:</strong> ' + crop.season + '</p>';
-            html += '<p><strong>Duration:</strong> ' + crop.duration + '</p>';
-            html += '<p><strong>Suitable Soil:</strong> ' + crop.soil + '</p>';
-            
-            html += '<h3>Step-by-Step Cultivation Process:</h3>';
-            for (var i = 0; i < crop.steps.length; i++) {
-                html += '<div class="process-step">';
-                html += '<strong>Step ' + (i + 1) + ':</strong> ' + crop.steps[i];
-                html += '</div>';
-            }
-            
-            html += '<h3>Budget Breakdown (Per Square Meter):</h3>';
-            html += '<table class="budget-table">';
-            html += '<tr><th>Item</th><th>Cost (₹)</th></tr>';
-            html += '<tr><td>Seeds</td><td>₹' + crop.budget.seeds + '</td></tr>';
-            html += '<tr><td>Fertilizer</td><td>₹' + crop.budget.fertilizer + '</td></tr>';
-            html += '<tr><td>Pesticides</td><td>₹' + crop.budget.pesticides + '</td></tr>';
-            html += '<tr><td>Labor</td><td>₹' + crop.budget.labor + '</td></tr>';
-            html += '<tr><td>Irrigation</td><td>₹' + crop.budget.irrigation + '</td></tr>';
-            html += '<tr><th>Total</th><th>₹' + crop.budget.total + '</th></tr>';
-            html += '</table>';
-            
-            html += '<h3>Daily Reminders & Tasks:</h3>';
-            for (var i = 0; i < crop.reminders.length; i++) {
-                var r = crop.reminders[i];
-                html += '<div class="reminder-card' + (r.urgent ? ' urgent' : '') + '">';
-                html += '<h4>Day ' + r.day + (r.urgent ? ' ⚠️ IMPORTANT' : '') + '</h4>';
-                html += '<p>' + r.task + '</p>';
-                html += '</div>';
-            }
-            
-            html += '</div>';
-            
-            document.getElementById('cropList').style.display = 'none';
-            document.getElementById('searchBox').style.display = 'none';
-            document.getElementById('cropDetail').style.display = 'block';
-            document.getElementById('cropDetail').innerHTML = html;
-        }
+    // ----- Navigation & Actions -----
+    function login() {
+      const name = document.getElementById('fname').value.trim();
+      const phone = document.getElementById('fphone').value.trim();
+      const state = document.getElementById('fstate').value;
 
-        function backToCrops() {
-            document.getElementById('cropList').style.display = 'grid';
-            document.getElementById('searchBox').style.display = 'block';
-            document.getElementById('cropDetail').style.display = 'none';
-        }
+      if (!name || !state) {
+        alert('Please enter your name and select your state.');
+        return;
+      }
 
-        function populateBudgetDropdown() {
-            var select = document.getElementById('budgetCrop');
-            for (var i = 0; i < crops.length; i++) {
-                var option = document.createElement('option');
-                option.value = i;
-                option.text = crops[i].name + ' (' + crops[i].hindi + ')';
-                select.appendChild(option);
-            }
-        }
+      d.n = name;
+      d.ph = phone;
+      d.st = state;
 
-        function calculateBudget() {
-            var cropIndex = document.getElementById('budgetCrop').value;
-            var area = document.getElementById('landArea').value;
-            
-            if (!cropIndex || !area || area <= 0) {
-                alert('Please select a crop and enter valid land area!');
-                return;
-            }
-            
-            var crop = crops[cropIndex];
-            var totalCost = crop.budget.total * area;
-            
-            var html = '<div class="result-box">';
-            html += '<h3>Total Budget Required</h3>';
-            html += '<h2 style="font-size: 3em; margin: 20px 0;">₹' + totalCost.toFixed(2) + '</h2>';
-            html += '<p>For ' + area + ' square meters of ' + crop.name + '</p>';
-            html += '<hr style="margin: 20px 0; border: 1px solid rgba(255,255,255,0.3);">';
-            html += '<h4>Detailed Breakdown:</h4>';
-            html += '<p>Seeds: ₹' + (crop.budget.seeds * area).toFixed(2) + '</p>';
-            html += '<p>Fertilizer: ₹' + (crop.budget.fertilizer * area).toFixed(2) + '</p>';
-            html += '<p>Pesticides: ₹' + (crop.budget.pesticides * area).toFixed(2) + '</p>';
-            html += '<p>Labor: ₹' + (crop.budget.labor * area).toFixed(2) + '</p>';
-            html += '<p>Irrigation: ₹' + (crop.budget.irrigation * area).toFixed(2) + '</p>';
-            html += '</div>';
-            
-            document.getElementById('budgetResult').innerHTML = html;
-        }
+      const ui = document.getElementById('userInfo');
+      ui.style.display = 'block';
+      ui.textContent = `${d.n} • ${d.st}${d.ph ? ' • ' + d.ph : ''}`;
 
-        function displaySoilGuide() {
-            var html = '';
-            for (var i = 0; i < soilTypes.length; i++) {
-                var soil = soilTypes[i];
-                html += '<div class="soil-card">';
-                html += '<h3>🌱 ' + soil.name + '</h3>';
-                html += '<p><strong>Description:</strong> ' + soil.description + '</p>';
-                html += '<p><strong>Best Crops:</strong> ' + soil.crops + '</p>';
-                html += '<p><strong>Found in:</strong> ' + soil.region + '</p>';
-                html += '</div>';
-            }
-            document.getElementById('soilGuide').innerHTML = html;
-        }
+      renderSoilGrid();
+      showPage('p1');
+    }
 
-        function displayReminders() {
-            var html = '<div style="background: #e3f2fd; padding: 20px; border-radius: 15px; margin-bottom: 20px;">';
-            html += '<h3>📱 How to Use Daily Reminders:</h3>';
-            html += '<p>1. Select a crop from "All Crops" tab to see its complete schedule</p>';
-            html += '<p>2. Each crop has day-wise tasks marked as regular or IMPORTANT</p>';
-            html += '<p>3. Follow the timeline for best results</p>';
-            html += '<p>4. Bookmark this page and check daily!</p>';
-            html += '</div>';
-            
-            if (currentCrop) {
-                html += '<h3>Reminders for ' + currentCrop.name + ':</h3>';
-                for (var i = 0; i < currentCrop.reminders.length; i++) {
-                    var r = currentCrop.reminders[i];
-                    html += '<div class="reminder-card' + (r.urgent ? ' urgent' : '') + '">';
-                    html += '<h4>Day ' + r.day + (r.urgent ? ' ⚠️ IMPORTANT' : '') + '</h4>';
-                    html += '<p>' + r.task + '</p>';
-                    html += '</div>';
-                }
-            } else {
-                html += '<p style="text-align: center; color: #666; padding: 40px;">Please select a crop from the "All Crops" tab to see reminders</p>';
-            }
-            
-            document.getElementById('reminderList').innerHTML = html;
-        }
+    function gp1() { showPage('p1'); }
 
-        window.onload = init;
-    </script>
+    function gp2() {
+      if (!d.s) {
+        alert('Please select a soil type.');
+        return;
+      }
+      renderCropGrid();
+      showPage('p2');
+    }
+
+    function gp3() {
+      if (!d.c.length) {
+        alert('Please select at least one crop.');
+        return;
+      }
+      d.c.forEach(name => {
+        if (!d.a[name]) d.a[name] = { val:'', unit:'acre' };
+      });
+      renderAreaInputs();
+      showPage('p3');
+    }
+
+    function gp4() {
+      let ok = true;
+      d.c.forEach(name => {
+        const id = cssId(name);
+        const val = document.getElementById('area_'+id)?.value;
+        const unit = document.getElementById('unit_'+id)?.value || 'acre';
+        if (!val || parseFloat(val) <= 0) ok = false;
+        d.a[name] = { val: val || 0, unit };
+      });
+      if (!ok) {
+        alert('Please enter area for all selected crops (greater than 0).');
+        return;
+      }
+      renderGuide();
+      renderLinks();
+      showPage('p4');
+    }
+
+    function en() {
+      const ar = document.getElementById('ar');
+      const msg = document.createElement('div');
+      msg.className = 'success';
+      msg.innerHTML = '<strong>🔔 Reminders enabled!</strong> Keep an eye on your schedule.';
+      ar.prepend(msg);
+    }
+
+    function rs() {
+      d = { n:'', ph:'', st:'', s:'', c:[], a:{} };
+      document.getElementById('fname').value = '';
+      document.getElementById('fphone').value = '';
+      document.getElementById('fstate').value = '';
+      document.getElementById('userInfo').style.display = 'none';
+      document.getElementById('userInfo').textContent = '';
+      document.getElementById('sg').innerHTML = '';
+      document.getElementById('cg').innerHTML = '';
+      document.getElementById('si').style.display = 'none';
+      document.getElementById('sl').textContent = '';
+      document.getElementById('ai').innerHTML = '';
+      document.getElementById('ag').innerHTML = '';
+      document.getElementById('tb').innerHTML = '';
+      document.getElementById('ar').innerHTML = '';
+      document.getElementById('links').innerHTML = '';
+      showPage('p0');
+    }
+  </script>
 </body>
 </html>
