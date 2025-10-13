@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GST Calculator with Major Products</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #c7d2fe, #e0f2fe, #f5f3ff);
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 30px;
+    width: 100%;
+    max-width: 750px;
+    position: relative;
+  }
+  h1 { text-align: center; color: #1d4ed8; margin-bottom: 20px; }
+  label { font-weight: 600; display: block; margin-top: 12px; font-size: 14px; color: #334155; }
+  input, select {
+    width: 100%; padding: 10px; margin-top: 4px; border-radius: 8px;
+    border: 1px solid #cbd5e1; font-size: 14px; outline: none; transition: 0.3s;
+  }
+  input:focus, select:focus {
+    border-color: #3b82f6; box-shadow: 0 0 5px rgba(59,130,246,0.4);
+  }
+  button {
+    margin-top: 18px; width: 100%; background: linear-gradient(90deg, #2563eb, #7c3aed);
+    color: white; padding: 12px; border: none; border-radius: 10px;
+    font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s;
+  }
+  button:hover { opacity: 0.9; transform: translateY(-1px); }
+  .output {
+    margin-top: 24px; background: #f1f5f9; border-radius: 10px;
+    padding: 18px; border-left: 5px solid #2563eb;
+  }
+  .tax-line { display: flex; justify-content: space-between; margin: 6px 0; }
+  .highlight { color: #16a34a; font-weight: bold; }
+  .warning { color: #dc2626; font-weight: bold; font-size: 13px; }
+  footer { margin-top: 28px; text-align: center; font-size: 12px; color: #475569; font-style: italic; }
+  footer span { color: #1e3a8a; font-weight: bold; }
+  .suggestions {
+    background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;
+    margin-top: 4px; max-height: 140px; overflow-y: auto;
+    position: absolute; width: calc(100% - 60px); z-index: 10;
+  }
+  .suggestion { padding: 8px; cursor: pointer; }
+  .suggestion:hover { background: #e0f2fe; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>GST Calculator (Major Products)</h1>
+
+  <label>Product Name</label>
+  <input type="text" id="productName" placeholder="Type to search product..." />
+  <div id="suggestions" class="suggestions" style="display:none;"></div>
+
+  <label>Purchase Date</label>
+  <input type="date" id="purchaseDate" />
+
+  <label>Amount (₹)</label>
+  <input type="number" id="amount" placeholder="Enter invoice amount" />
+
+  <label>Place of Supplier (State)</label>
+  <select id="supplierState"></select>
+
+  <label>Place of Recipient (State)</label>
+  <select id="recipientState"></select>
+
+  <button id="btnCalc">Calculate GST</button>
+
+  <div id="output" class="output"></div>
+
+  <footer>Designed and formally presented by <span>Jaisri M.A.</span></footer>
+</div>
+
+<script>
+  // GST DB with major product headings
+  const gstDB = {
+    "live animals": { hsn: "0101", rate: 0 },
+    "meat": { hsn: "0201", rate: 5 },
+    "fish": { hsn: "0302", rate: 5 },
+    "dairy products": { hsn: "0401", rate: 0 },
+    "edible vegetables": { hsn: "0701", rate: 5 },
+    "edible fruits": { hsn: "0801", rate: 5 },
+    "coffee": { hsn: "0901", rate: 5 },
+    "tea": { hsn: "0902", rate: 5 },
+    "cereals": { hsn: "1001", rate: 0 },
+    "sugar": { hsn: "1701", rate: 5 },
+    "oil seeds": { hsn: "1201", rate: 5 },
+    "animal/vegetable fats": { hsn: "1501", rate: 5 },
+    "soap": { hsn: "3401", rate: 18 },
+    "plastics": { hsn: "3901", rate: 18 },
+    "rubber": { hsn: "4001", rate: 18 },
+    "iron and steel": { hsn: "7201", rate: 18 },
+    "bearings": { hsn: "8482", rate: 18 },
+    "machinery": { hsn: "8401", rate: 18 },
+    "electrical machinery": { hsn: "8501", rate: 18 },
+    "vehicles": { hsn: "8701", rate: 28 },
+    "footwear": { hsn: "6401", rate: 18 },
+    "textiles": { hsn: "5001", rate: 5 },
+    "books": { hsn: "4901", rate: 0 },
+    "pharmaceutical products": { hsn: "3001", rate: 12 },
+    "cosmetics": { hsn: "3301", rate: 18 },
+    "toys": { hsn: "9503", rate: 18 }
+  };
+
+  const productToHSN = {}, officialRates = {};
+  for(let p in gstDB) {
+    productToHSN[p] = gstDB[p].hsn;
+    officialRates[gstDB[p].hsn] = gstDB[p].rate;
+  }
+
+  const states = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
+  "Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra",
+  "Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu",
+  "Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman & Nicobar","Chandigarh",
+  "Dadra & Nagar Haveli and Daman and Diu","Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"];
+
+  const supplierState = document.getElementById("supplierState");
+  const recipientState = document.getElementById("recipientState");
+  states.forEach(s => {
+    supplierState.innerHTML += `<option value="${s}">${s}</option>`;
+    recipientState.innerHTML += `<option value="${s}">${s}</option>`;
+  });
+  supplierState.value = recipientState.value = "Tamil Nadu";
+
+  const productInput = document.getElementById("productName");
+  const suggestionsDiv = document.getElementById("suggestions");
+  const outputDiv = document.getElementById("output");
+
+  // Autocomplete functionality
+  productInput.addEventListener("input", e => {
+    const q = e.target.value.trim().toLowerCase();
+    suggestionsDiv.innerHTML = "";
+    if(!q){ suggestionsDiv.style.display="none"; return; }
+    const matches = Object.keys(productToHSN).filter(p => p.includes(q));
+    if(!matches.length){ suggestionsDiv.style.display="none"; return; }
+    matches.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "suggestion";
+      div.textContent = p;
+      div.onclick = () => { productInput.value = p; suggestionsDiv.style.display="none"; };
+      suggestionsDiv.appendChild(div);
+    });
+    suggestionsDiv.style.display="block";
+  });
+
+  document.addEventListener("click", e => { if(e.target !== productInput) suggestionsDiv.style.display="none"; });
+
+  // GST Calculation
+  function calculateGST() {
+    const productName = productInput.value.trim().toLowerCase();
+    const date = document.getElementById("purchaseDate").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+    const supState = supplierState.value;
+    const recState = recipientState.value;
+
+    if(!productName || !date || !amount){
+      outputDiv.innerHTML = `<p class="warning">⚠ Please fill all required fields.</p>`; return;
+    }
+
+    const hsn = productToHSN[productName];
+    const gstRate = officialRates[hsn];
+    if(!hsn || gstRate===undefined){
+      outputDiv.innerHTML = `<p class="warning">No official HSN or GST rate found for "${productName}".</p>`; return;
+    }
+
+    const intra = supState===recState;
+    let cgst=0, sgst=0, igst=0;
+    if(gstRate===0){
+      outputDiv.innerHTML = `<p><strong>HSN:</strong> ${hsn}</p><p><strong>GST Rate:</strong> 0% (Exempt)</p><p class="highlight">No tax applicable.</p>`; return;
+    }
+    if(intra){ cgst=sgst=amount*(gstRate/2)/100; } else { igst=amount*gstRate/100; }
+
+    const dueDate=new Date(date); dueDate.setMonth(dueDate.getMonth()+1); dueDate.setDate(20);
+
+    let html=`<p><strong>Product:</strong> ${productName.toUpperCase()}</p>
+              <p><strong>Place of Supplier:</strong> ${supState}</p>
+              <p><strong>HSN Code:</strong> ${hsn}</p>
+              <p><strong>Applicable GST Rate:</strong> ${gstRate}%</p>
+              <p><strong>Invoice Amount:</strong> ₹ ${amount.toFixed(2)}</p>
+              <hr>
+              <p><strong>Supply Type:</strong> ${intra?"Intra-state (CGST+SGST)":"Inter-state (IGST)"}</p>`;
+    if(intra){
+      html+=`<div class="tax-line"><span>CGST (${gstRate/2}%):</span><span>₹ ${cgst.toFixed(2)}</span></div>
+             <div class="tax-line"><span>SGST (${gstRate/2}%):</span><span>₹ ${sgst.toFixed(2)}</span></div>`;
+    } else {
+      html+=`<div class="tax-line"><span>IGST (${gstRate}%):</span><span>₹ ${igst.toFixed(2)}</span></div>`;
+    }
+    html+=`<hr><p><strong>Total Tax Payable:</strong> ₹ ${(cgst+sgst+igst).toFixed(2)}</p>
+           <p><strong>Due Date to Pay Tax:</strong> ${dueDate.toLocaleDateString("en-GB")}</p>
+           <p style="font-size:13px;color:#64748b;">(As per standard GSTR-3B due date)</p>`;
+    outputDiv.innerHTML=html;
+  }
+
+  document.getElementById("btnCalc").addEventListener("click", calculateGST);
+</script>
+</body>
+</html>
