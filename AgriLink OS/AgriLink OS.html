@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AgroDOS — Farmers • Buyers • Logistics</title>
+<style>
+  /* Simple modern styling (responsive) */
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#16a34a; --muted:#94a3b8; --glass: rgba(255,255,255,0.03);
+    --success:#16a34a; --danger:#ef4444; --glass-2: rgba(255,255,255,0.02);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background: linear-gradient(180deg,#042023 0%, #041427 60%), var(--bg);
+    color:#e6eef6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:28px auto;padding:20px;}
+  header{display:flex;gap:16px;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:46px;height:46px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#0ea5a0);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042027}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+
+  .topbar{display:flex;gap:8px;align-items:center}
+  button,select,input,textarea{font-family:inherit}
+  .btn{
+    background:var(--accent); color:#042027; border:none; padding:8px 12px;border-radius:8px;
+    cursor:pointer; font-weight:600; box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  }
+  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .layout{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:20px}
+  @media (max-width:880px){ .layout{grid-template-columns:1fr} .sidebar{order:2} .main{order:1} }
+
+  .card{background:linear-gradient(180deg,var(--card), rgba(8,10,14,0.5)); padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+  .sidebar .card{padding:12px}
+  .section-title{font-size:13px;color:var(--muted);margin-bottom:8px}
+
+  label{display:block;font-size:12px;margin:8px 0 6px;color:var(--muted)}
+  input[type="text"],input[type="number"],select,textarea{
+    width:100%; padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass); color:inherit;
+  }
+  .small{font-size:12px;color:var(--muted)}
+  .user-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto;padding-right:6px}
+
+  .user-row{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+  .avatar{width:44px;height:44;border-radius:8px;background:linear-gradient(135deg,#fff2 10%, transparent);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)}
+  .meta{flex:1}
+  .muted{color:var(--muted);font-size:12px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tab{padding:8px 12px;border-radius:8px;background:var(--glass-2);cursor:pointer;font-size:13px}
+  .tab.active{background:linear-gradient(90deg,#0ea5a0,#16a34a); color:#042027; font-weight:700}
+
+  .listings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .listing{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(255,255,255,0.03)}
+  .listing h4{margin:0 0 6px}
+  .chip{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+  .row{display:flex;gap:8px;align-items:center}
+  .muted-2{color:var(--muted);font-size:12px}
+
+  .center{display:flex;justify-content:center;align-items:center}
+  .footer-note{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .notice{padding:8px;border-radius:8px;background:rgba(255,255,255,0.012);border:1px dashed rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+
+  /* table */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left;font-size:13px}
+  th{color:var(--muted);font-size:12px}
+
+  /* small helpers */
+  .status-pill{padding:6px 8px;border-radius:999px;font-size:12px;font-weight:700}
+  .s-green{background:rgba(22,163,74,0.12);color:var(--success);border:1px solid rgba(22,163,74,0.08)}
+  .s-yellow{background:rgba(250,204,21,0.06);color:#f59e0b;border:1px solid rgba(250,204,21,0.06)}
+  .s-red{background:rgba(239,68,68,0.06);color:var(--danger);border:1px solid rgba(239,68,68,0.06)}
+
+  .searchbar{display:flex;gap:8px;margin-bottom:12px}
+  .toast{position:fixed;right:18px;bottom:18px;background:#07131a;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+  .small-muted{font-size:11px;color:var(--muted)}
+  .debug{font-size:11px;color:var(--muted);padding-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <h1>AgroDOS by R.Rajeswari</h1>
+        <p class="lead">Integrated platform for Farmers • Buyers • Logistics — demo (client-side)</p>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <select id="roleSwitch" title="Switch active role">
+        <option value="guest">Continue as Guest</option>
+        <option value="farmer">Farmer</option>
+        <option value="buyer">Buyer</option>
+        <option value="logistics">Logistics</option>
+      </select>
+      <button class="btn" id="btnOpenRegister">Register / Profile</button>
+      <button class="btn secondary" id="btnReset">Reset Demo</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="card">
+        <div class="section-title">Active User</div>
+        <div id="activeUserBlock" class="center" style="flex-direction:column;gap:8px">
+          <div class="muted">Not signed in — choose role & click Register</div>
+        </div>
+
+        <hr style="border:none;height:10px">
+
+        <div class="section-title">Quick Actions</div>
+        <div style="display:grid;gap:8px">
+          <button class="btn" id="btnNewListing">Create Listing (Farmers)</button>
+          <button class="btn secondary" id="btnSearchListings">Search Listings</button>
+          <button class="btn" id="btnMyOrders">My Orders / Jobs</button>
+        </div>
+
+        <hr style="border:none;height:10px">
+
+        <div class="section-title">Users (demo)</div>
+        <div class="user-list card" id="userList">
+          <!-- populated by JS -->
+        </div>
+        <div class="footer-note">Data saved in browser. Use "Reset Demo" to clear.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="card">
+        <div class="tabs" id="mainTabs">
+          <div class="tab active" data-tab="explore">Explore Listings</div>
+          <div class="tab" data-tab="orders">Orders & Jobs</div>
+          <div class="tab" data-tab="logistics">Logistics Hub</div>
+          <div class="tab" data-tab="analytics">Analytics</div>
+        </div>
+
+        <div id="tabContent">
+          <!-- Explore -->
+          <div data-panel="explore">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+              <div style="flex:1">
+                <div class="searchbar">
+                  <input id="searchInput" type="text" placeholder="Search crop, location, farmer..." />
+                  <select id="filterCrop">
+                    <option value="">All crops</option>
+                  </select>
+                  <button class="btn secondary" id="btnClearFilters">Clear</button>
+                </div>
+              </div>
+              <div style="width:260px;text-align:right">
+                <div class="small-muted">Total Listings: <span id="totalListings">0</span></div>
+                <div class="small-muted">Active Orders: <span id="totalOrders">0</span></div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" id="listingsWrap">
+              <div class="listings" id="listingsGrid"></div>
+            </div>
+          </div>
+
+          <!-- Orders & Jobs -->
+          <div data-panel="orders" style="display:none">
+            <div class="section-title">My Orders / Jobs</div>
+            <div id="ordersTableWrap" style="margin-top:8px">
+              <table id="ordersTable">
+                <thead>
+                  <tr><th>Order ID</th><th>Crop</th><th>Qty</th><th>Buyer</th><th>Farmer</th><th>Logistics</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="debug" id="ordersDebug"></div>
+          </div>
+
+          <!-- Logistics -->
+          <div data-panel="logistics" style="display:none">
+            <div class="section-title">Logistics Hub — Available Jobs</div>
+            <div id="jobsGrid" style="margin-top:8px"></div>
+            <div style="margin-top:12px" class="notice">Logistics users can pick jobs; farmers and buyers can request pickup. This demo simulates assignment & status updates.</div>
+          </div>
+
+          <!-- Analytics -->
+          <div data-panel="analytics" style="display:none">
+            <div class="grid-2" style="gap:12px">
+              <div class="card">
+                <div class="section-title">Quick Metrics</div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <div style="flex:1">
+                    <div class="muted-2 small">Listings</div><div style="font-weight:800;font-size:22px" id="metricListings">0</div>
+                  </div>
+                  <div style="flex:1">
+                    <div class="muted-2 small">Orders</div><div style="font-weight:800;font-size:22px" id="metricOrders">0</div>
+                  </div>
+                </div>
+                <hr>
+                <div class="section-title">Top Crops</div>
+                <div id="topCropsList" style="margin-top:8px"></div>
+              </div>
+
+              <div class="card">
+                <div class="section-title">Recent Activity</div>
+                <div id="activityFeed" style="margin-top:8px"></div>
+                <div style="margin-top:12px" class="small-muted">All activity is local to your browser (demo mode).</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="card">
+        <div class="section-title">How to demo</div>
+        <ol style="margin:0 0 8px 18px;color:var(--muted)">
+          <li>Create sample users using Register (choose role).</li>
+          <li>As Farmer: create listings (crop, qty, price, location).</li>
+          <li>As Buyer: search listings, create order for a listing.</li>
+          <li>As Logistics: view available pickups and accept a job; update status.</li>
+        </ol>
+        <div class="notice">This is a client-side demo. For production, connect to a backend API, authentication, secure payments, and mapping/logistics APIs.</div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal templates (simple) -->
+<div id="modalRoot" style="position:fixed;left:0;top:0;width:100%;height:100%;display:none;z-index:999;">
+  <div id="modalBackdrop" style="position:absolute;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.6)"></div>
+  <div id="modalCard" class="card" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:760px;max-width:95%;max-height:90%;overflow:auto">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<div id="toast" style="display:none" class="toast"></div>
+
+<script>
+/*
+  AgroDOS - Single-file demo app
+  - Uses localStorage for persistence
+  - Roles: farmer, buyer, logistics
+  - Entities: users, listings, orders
+  - Simple workflows for demoing an integrated platform
+*/
+
+const LS_KEY = 'agrodos_v1';
+const defaultState = {
+  users: [],        // {id,name,role,phone,location}
+  listings: [],     // {id,farmerId,crop,qty,unit,price,location,createdAt}
+  orders: [],       // {id,listingId,buyerId,farmerId,qty,price,total,logisticsId,status,createdAt,history:[]}
+  activity: []
+};
+
+// --- Utilities ---
+const uid = (p='id') => `${p}_${Math.random().toString(36).slice(2,9)}`;
+const now = () => new Date().toISOString();
+const saveState = (s) => localStorage.setItem(LS_KEY, JSON.stringify(s));
+const loadState = () => {
+  const raw = localStorage.getItem(LS_KEY);
+  if(!raw) { saveState(defaultState); return JSON.parse(JSON.stringify(defaultState));}
+  try { return JSON.parse(raw); } catch(e){ localStorage.removeItem(LS_KEY); saveState(defaultState); return JSON.parse(JSON.stringify(defaultState));}
+};
+let state = loadState();
+
+// Active user object (unsigned by default)
+let activeUser = null;
+let activeRole = 'guest';
+
+// --- DOM refs ---
+const btnOpenRegister = document.getElementById('btnOpenRegister');
+const btnReset = document.getElementById('btnReset');
+const roleSwitch = document.getElementById('roleSwitch');
+const activeUserBlock = document.getElementById('activeUserBlock');
+const userListEl = document.getElementById('userList');
+const mainTabs = document.getElementById('mainTabs');
+const listingsGrid = document.getElementById('listingsGrid');
+const filterCrop = document.getElementById('filterCrop');
+const searchInput = document.getElementById('searchInput');
+const totalListings = document.getElementById('totalListings');
+const totalOrders = document.getElementById('totalOrders');
+const modalRoot = document.getElementById('modalRoot');
+const modalCard = document.getElementById('modalCard');
+const toast = document.getElementById('toast');
+const btnNewListing = document.getElementById('btnNewListing');
+const btnSearchListings = document.getElementById('btnSearchListings');
+const btnMyOrders = document.getElementById('btnMyOrders');
+
+// Tabs content
+const panels = document.querySelectorAll('[data-panel]');
+
+// Orders table
+const ordersTableBody = document.querySelector('#ordersTable tbody');
+
+// Metrics
+const metricListings = document.getElementById('metricListings');
+const metricOrders = document.getElementById('metricOrders');
+const topCropsList = document.getElementById('topCropsList');
+const activityFeed = document.getElementById('activityFeed');
+
+// Jobs
+const jobsGrid = document.getElementById('jobsGrid');
+
+// Initialize some demo users if empty
+function seedDemo() {
+  if(state.users.length>0) return;
+  const demoUsers = [
+    {id:uid('u'),name:'Ramu (Farmer)',role:'farmer',phone:'+91-9000000001',location:'Coimbatore'},
+    {id:uid('u'),name:'Lakshmi (Farmer)',role:'farmer',phone:'+91-9000000002',location:'Erode'},
+    {id:uid('u'),name:'Kumar (Buyer)',role:'buyer',phone:'+91-9000000003',location:'Chennai'},
+    {id:uid('u'),name:'Priya (Buyer)',role:'buyer',phone:'+91-9000000004',location:'Madurai'},
+    {id:uid('u'),name:'SpeedLogistics',role:'logistics',phone:'+91-9000000005',location:'Tiruppur'},
+  ];
+  state.users.push(...demoUsers);
+  // demo listings
+  const l1 = {id:uid('l'), farmerId:state.users[0].id, crop:'Tomato', qty:1200, unit:'kg', price:9, location:'Coimbatore', createdAt:now()};
+  const l2 = {id:uid('l'), farmerId:state.users[1].id, crop:'Rice (Raw)', qty:5000, unit:'kg', price:28, location:'Erode', createdAt:now()};
+  state.listings.push(l1,l2);
+  // demo order
+  const o1 = {id:uid('o'), listingId:l1.id, buyerId:state.users[2].id, farmerId:l1.farmerId, qty:500, price:l1.price, total:500*l1.price, logisticsId:null, status:'requested', createdAt:now(), history:[{at:now(),msg:'Order requested by buyer'}]};
+  state.orders.push(o1);
+  pushActivity('Demo seeded');
+  saveState(state);
+}
+
+function pushActivity(text){
+  state.activity.unshift({id:uid('a'),text,at:now()});
+  if(state.activity.length>80) state.activity.length=80;
+  saveState(state);
+}
+
+// render functions
+function renderUsers(){
+  userListEl.innerHTML = '';
+  state.users.slice().reverse().forEach(u=>{
+    const div = document.createElement('div'); div.className='user-row';
+    div.innerHTML = `<div class="avatar">${u.name.split(' ')[0][0]||'U'}</div>
+      <div class="meta">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">${u.name}</div>
+          <div class="muted">${u.role}</div>
+        </div>
+        <div class="muted" style="font-size:12px">${u.phone} • ${u.location}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn secondary" style="padding:6px 8px" onclick="viewProfile('${u.id}')">View</button>
+        <button class="btn" style="padding:6px 8px" onclick="impersonate('${u.id}')">Use</button>
+      </div>`;
+    userListEl.appendChild(div);
+  });
+}
+
+function renderActiveUser(){
+  if(!activeUser){
+    activeUserBlock.innerHTML = `<div class="muted">Not signed in — choose role & click Register</div>`;
+    return;
+  }
+  activeUserBlock.innerHTML = `<div style="display:flex;gap:10px;align-items:center;width:100%">
+    <div class="avatar">${activeUser.name.split(' ')[0][0]||'U'}</div>
+    <div style="flex:1">
+      <div style="font-weight:800">${activeUser.name} <span style="font-weight:600;font-size:12px;color:var(--muted)">(${activeUser.role})</span></div>
+      <div class="muted">${activeUser.phone} • ${activeUser.location}</div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn secondary" onclick="openProfileForEdit()">Edit</button>
+      <button class="btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>`;
+}
+
+function renderListings(filterText=''){
+  listingsGrid.innerHTML='';
+  const q = (filterText||'').toLowerCase();
+  const cropSet = new Set();
+  state.listings.forEach(ls=>{
+    cropSet.add(ls.crop);
+  });
+  populateCropFilter(Array.from(cropSet).sort());
+  let list = state.listings.slice().sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  if(q){
+    list = list.filter(l=> (l.crop||'').toLowerCase().includes(q) || (l.location||'').toLowerCase().includes(q) || (getUserById(l.farmerId)?.name||'').toLowerCase().includes(q));
+  }
+  const selectedCrop = filterCrop.value || '';
+  if(selectedCrop) list = list.filter(l=>l.crop === selectedCrop);
+
+  totalListings.innerText = list.length;
+  metricListings.innerText = state.listings.length;
+  metricOrders.innerText = state.orders.length;
+  totalOrders.innerText = state.orders.length;
+
+  if(list.length===0){
+    listingsGrid.innerHTML = `<div style="grid-column:1/-1"><div class="notice">No listings match your filters. Farmers can create new listings.</div></div>`;
+    return;
+  }
+
+  list.forEach(l=>{
+    const farmer = getUserById(l.farmerId) || {name:'Unknown'};
+    const el = document.createElement('div'); el.className='listing';
+    el.innerHTML = `<h4>${l.crop}</h4>
+      <div class="muted-2">Qty: <strong>${l.qty} ${l.unit}</strong></div>
+      <div class="muted-2">Price: <strong>₹${l.price} / ${l.unit}</strong></div>
+      <div class="muted-2">Farmer: ${farmer.name} • ${l.location}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <button class="btn" onclick="viewListing('${l.id}')">View</button>
+        <button class="btn secondary" onclick="openOrder('${l.id}')">Order</button>
+      </div>`;
+    listingsGrid.appendChild(el);
+  });
+}
+
+function populateCropFilter(crops){
+  filterCrop.innerHTML = `<option value="">All crops</option>` + crops.map(c=>`<option>${c}</option>`).join('');
+}
+
+function renderOrdersTable(){
+  ordersTableBody.innerHTML='';
+  const ords = state.orders.slice().sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+  ords.forEach(o=>{
+    const listing = getListingById(o.listingId) || {crop:'unknown'};
+    const buyer = getUserById(o.buyerId) || {};
+    const farmer = getUserById(o.farmerId) || {};
+    const logistics = getUserById(o.logisticsId) || {};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${o.id}</td>
+      <td>${listing.crop}</td>
+      <td>${o.qty} ${listing.unit||'unit'}</td>
+      <td>${buyer.name||'-'}</td>
+      <td>${farmer.name||'-'}</td>
+      <td>${logistics.name||'-'}</td>
+      <td><span class="status-pill ${statusClass(o.status)}">${o.status}</span></td>
+      <td>
+        ${renderOrderActions(o)}
+      </td>`;
+    ordersTableBody.appendChild(tr);
+  });
+  updateTopCrops();
+  renderActivity();
+  renderJobs();
+}
+
+function statusClass(s){
+  if(s==='delivered' || s==='completed' || s==='accepted') return 's-green';
+  if(s==='in-transit' || s==='assigned' || s==='picked') return 's-yellow';
+  return 's-red';
+}
+
+function renderOrderActions(o){
+  const parts=[];
+  // actions depend on activeUser role and relation
+  if(!activeUser) return '<div class="small-muted">Sign in to act</div>';
+  if(activeUser.role==='buyer' && o.buyerId===activeUser.id && o.status==='requested'){
+    parts.push(`<button class="btn" onclick="cancelOrder('${o.id}')">Cancel</button>`);
+  }
+  if(activeUser.role==='farmer' && o.farmerId===activeUser.id && o.status==='requested'){
+    parts.push(`<button class="btn" onclick="acceptOrder('${o.id}')">Accept</button>`);
+    parts.push(`<button class="btn secondary" onclick="rejectOrder('${o.id}')">Reject</button>`);
+  }
+  if(activeUser.role==='logistics'){
+    if(o.status==='requested' || o.status==='accepted'){
+      parts.push(`<button class="btn" onclick="claimJob('${o.id}')">Claim Job</button>`);
+    }
+    if(o.logisticsId===activeUser.id && o.status==='assigned'){
+      parts.push(`<button class="btn" onclick="markPicked('${o.id}')">Picked</button>`);
+    }
+    if(o.logisticsId===activeUser.id && o.status==='picked'){
+      parts.push(`<button class="btn" onclick="markInTransit('${o.id}')">In Transit</button>`);
+    }
+    if(o.logisticsId===activeUser.id && o.status==='in-transit'){
+      parts.push(`<button class="btn" onclick="markDelivered('${o.id}')">Delivered</button>`);
+    }
+  }
+  if(parts.length===0) return `<div class="small-muted">No actions</div>`;
+  return parts.join(' ');
+}
+
+function renderJobs(){
+  jobsGrid.innerHTML = '';
+  const openJobs = state.orders.filter(o => ['requested','accepted','assigned'].includes(o.status));
+  if(openJobs.length===0){
+    jobsGrid.innerHTML = `<div class="notice">No available jobs right now.</div>`;
+    return;
+  }
+  openJobs.forEach(o=>{
+    const listing = getListingById(o.listingId);
+    const farmer = getUserById(o.farmerId);
+    const buyer = getUserById(o.buyerId);
+    const div = document.createElement('div'); div.className='card';
+    div.style.marginBottom='10px';
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:800">${listing.crop} — ${o.qty} ${listing.unit}</div>
+        <div class="muted">${farmer.name} → ${buyer.name} • ${listing.location}</div>
+        <div class="muted-2 small">Order: ${o.id} • Status: <strong>${o.status}</strong></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn" onclick="viewOrder('${o.id}')">View</button>
+        <button class="btn secondary" onclick="claimJob('${o.id}')">Claim</button>
+      </div>
+    </div>`;
+    jobsGrid.appendChild(div);
+  });
+}
+
+function renderActivity(){
+  activityFeed.innerHTML = '';
+  state.activity.slice(0,20).forEach(a=>{
+    const d = document.createElement('div'); d.style.padding='6px 0'; d.innerHTML = `<div style="font-weight:700">${a.text}</div><div class="small-muted">${new Date(a.at).toLocaleString()}</div>`;
+    activityFeed.appendChild(d);
+  });
+}
+
+function updateTopCrops(){
+  const counts = {};
+  state.listings.forEach(l=>counts[l.crop]=(counts[l.crop]||0)+l.qty);
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  topCropsList.innerHTML = sorted.length?sorted.map(s=>`<div style="margin:6px 0"><strong>${s[0]}</strong> — ${s[1]} units</div>`).join(''):'<div class="small-muted">No crops yet</div>';
+}
+
+// getters
+function getUserById(id){ return state.users.find(u=>u.id===id); }
+function getListingById(id){ return state.listings.find(l=>l.id===id); }
+function getOrderById(id){ return state.orders.find(o=>o.id===id); }
+
+// --- Actions & modal interactions ---
+
+function showModal(html){
+  modalCard.innerHTML = html;
+  modalRoot.style.display='block';
+}
+function hideModal(){ modalRoot.style.display='none'; modalCard.innerHTML=''; }
+
+modalRoot.addEventListener('click', (e)=>{
+  if(e.target.id==='modalBackdrop') hideModal();
+});
+
+function toastShow(msg, ms=2400){
+  toast.innerText = msg; toast.style.display='block';
+  setTimeout(()=>{ toast.style.display='none'; }, ms);
+}
+
+// Registration & profiles
+btnOpenRegister.addEventListener('click', ()=> openRegistration());
+roleSwitch.addEventListener('change', (e)=> {
+  activeRole = e.target.value;
+  toastShow(`Role set to: ${activeRole}`);
+});
+
+function openRegistration(prefRole){
+  const role= prefRole || activeRole || 'farmer';
+  const html = `
+    <h3>Register / Create User</h3>
+    <div style="display:grid;gap:8px;margin-top:8px">
+      <label>Name</label><input id="regName" />
+      <label>Phone</label><input id="regPhone" />
+      <label>Location (city/district)</label><input id="regLocation" />
+      <label>Role</label>
+      <select id="regRole">
+        <option ${role==='farmer'?'selected':''}>farmer</option>
+        <option ${role==='buyer'?'selected':''}>buyer</option>
+        <option ${role==='logistics'?'selected':''}>logistics</option>
+      </select>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Cancel</button>
+        <button class="btn" onclick="registerUser()">Create</button>
+      </div>
+    </div>
+  `;
+  showModal(html);
+}
+
+function registerUser(){
+  const name = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const location = document.getElementById('regLocation').value.trim()||'Unknown';
+  const role = document.getElementById('regRole').value;
+  if(!name || !phone){ alert('Please provide name & phone'); return; }
+  const u = {id:uid('u'), name, phone, location, role};
+  state.users.push(u);
+  saveState(state);
+  pushActivity(`${u.name} registered as ${u.role}`);
+  renderUsers();
+  hideModal();
+  toastShow('User created — now click Use to become this user');
+}
+
+function impersonate(id){
+  activeUser = getUserById(id);
+  if(!activeUser) return;
+  activeRole = activeUser.role;
+  roleSwitch.value = activeRole;
+  renderActiveUser();
+  renderListings();
+  renderOrdersTable();
+  toastShow(`Signed in as ${activeUser.name} (${activeUser.role})`);
+}
+
+function viewProfile(id){
+  const u = getUserById(id);
+  if(!u) return;
+  const html = `<h3>Profile — ${u.name}</h3>
+    <div style="display:grid;gap:6px">
+      <div><strong>Role:</strong> ${u.role}</div>
+      <div><strong>Phone:</strong> ${u.phone}</div>
+      <div><strong>Location:</strong> ${u.location}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Close</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+function openProfileForEdit(){
+  if(!activeUser) { toastShow('No active user'); return; }
+  const html = `<h3>Edit Profile</h3>
+    <div style="display:grid;gap:8px;margin-top:8px">
+      <label>Name</label><input id="editName" value="${activeUser.name}" />
+      <label>Phone</label><input id="editPhone" value="${activeUser.phone}" />
+      <label>Location</label><input id="editLocation" value="${activeUser.location}" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Cancel</button>
+        <button class="btn" onclick="saveProfile()">Save</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+function saveProfile(){
+  const name = document.getElementById('editName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const location = document.getElementById('editLocation').value.trim();
+  if(!name || !phone) { alert('Name & phone required'); return; }
+  activeUser.name = name; activeUser.phone = phone; activeUser.location = location;
+  const idx = state.users.findIndex(u=>u.id===activeUser.id);
+  if(idx>-1) state.users[idx]=activeUser;
+  saveState(state);
+  pushActivity(`${activeUser.name} updated profile`);
+  renderActiveUser(); renderUsers();
+  hideModal(); toastShow('Profile saved');
+}
+
+// Create listing (farmers)
+btnNewListing.addEventListener('click', ()=> {
+  if(!activeUser || activeUser.role!=='farmer'){ openRegistration('farmer'); return; }
+  openNewListing();
+});
+
+function openNewListing(){
+  if(!activeUser) { toastShow('Please register or sign in as a Farmer'); return; }
+  if(activeUser.role!=='farmer'){ toastShow('Only Farmers can create listings'); return; }
+  const html = `<h3>Create Listing</h3>
+    <div style="display:grid;gap:8px">
+      <label>Crop / Product</label><input id="lCrop" placeholder="e.g. Tomato" />
+      <label>Quantity</label><input id="lQty" type="number" value="100" />
+      <label>Unit</label><input id="lUnit" value="kg" />
+      <label>Price per unit (₹)</label><input id="lPrice" type="number" value="10" />
+      <label>Location (city)</label><input id="lLoc" value="${activeUser.location||''}" />
+      <label>Description (optional)</label><textarea id="lDesc" rows="3"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Cancel</button>
+        <button class="btn" onclick="createListing()">Create</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+function createListing(){
+  const crop = document.getElementById('lCrop').value.trim();
+  const qty = parseFloat(document.getElementById('lQty').value) || 0;
+  const unit = document.getElementById('lUnit').value.trim() || 'kg';
+  const price = parseFloat(document.getElementById('lPrice').value) || 0;
+  const loc = document.getElementById('lLoc').value.trim() || activeUser.location || 'Unknown';
+  if(!crop || qty<=0 || price<=0){ alert('Please enter valid crop, quantity and price'); return; }
+  const l = {id:uid('l'), farmerId:activeUser.id, crop, qty, unit, price, location:loc, createdAt:now()};
+  state.listings.push(l);
+  saveState(state);
+  pushActivity(`${activeUser.name} created listing: ${crop} (${qty} ${unit})`);
+  renderListings();
+  renderUsers();
+  hideModal();
+  toastShow('Listing created');
+}
+
+// View listing + make order
+function viewListing(id){
+  const l = getListingById(id); if(!l) return;
+  const farmer = getUserById(l.farmerId) || {};
+  const html = `<h3>${l.crop} — ${l.qty} ${l.unit}</h3>
+    <div style="display:grid;gap:8px">
+      <div><strong>Price:</strong> ₹${l.price} / ${l.unit}</div>
+      <div><strong>Farmer:</strong> ${farmer.name} • ${farmer.location}</div>
+      <div><strong>Location:</strong> ${l.location}</div>
+      <div style="margin-top:6px;color:var(--muted)">${l.createdAt ? new Date(l.createdAt).toLocaleString() : ''}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Close</button>
+        <button class="btn" onclick="openOrder('${l.id}')">Order</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+function openOrder(listingId){
+  const l = getListingById(listingId);
+  if(!l){ alert('Listing not found'); return; }
+  if(!activeUser || activeUser.role!=='buyer'){ openRegistration('buyer'); return; }
+  const html = `<h3>Order — ${l.crop}</h3>
+    <div style="display:grid;gap:8px">
+      <div><strong>Available:</strong> ${l.qty} ${l.unit}</div>
+      <label>Quantity to buy</label><input id="oQty" type="number" value="${Math.min( Math.round(l.qty/10)||1, l.qty)}" />
+      <label>Pickup location (default)</label><input id="oPickup" value="${l.location}" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn secondary" onclick="hideModal()">Cancel</button>
+        <button class="btn" onclick="placeOrder('${listingId}')">Place Order</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+function placeOrder(listingId){
+  const l = getListingById(listingId);
+  const qty = parseFloat(document.getElementById('oQty').value) || 0;
+  if(qty<=0 || qty>l.qty){ alert('Invalid quantity'); return; }
+  const buyerId = activeUser.id;
+  const total = qty * l.price;
+  const o = {id:uid('o'), listingId, buyerId, farmerId:l.farmerId, qty, price:l.price, total, logisticsId:null, status:'requested', createdAt:now(), history:[{at:now(),msg:'Order placed by buyer'}]};
+  state.orders.push(o);
+  l.qty = l.qty - qty; // reduce listing available qty (simple)
+  saveState(state);
+  pushActivity(`${activeUser.name} placed order ${o.id} for ${qty} ${l.unit} of ${l.crop}`);
+  hideModal();
+  renderListings();
+  renderOrdersTable();
+  toastShow('Order placed — waiting for farmer to accept');
+}
+
+// Order workflows
+function cancelOrder(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(!activeUser || activeUser.id!==o.buyerId){ alert('Not allowed'); return; }
+  if(!confirm('Cancel this order?')) return;
+  o.status='cancelled'; o.history.push({at:now(),msg:'Order cancelled by buyer'});
+  saveState(state); pushActivity(`Order ${o.id} cancelled`);
+  renderOrdersTable(); toastShow('Order cancelled');
+}
+
+function acceptOrder(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(!activeUser || activeUser.id!==o.farmerId){ alert('Not allowed'); return; }
+  o.status='accepted'; o.history.push({at:now(),msg:'Order accepted by farmer'});
+  saveState(state); pushActivity(`Order ${o.id} accepted by farmer`);
+  renderOrdersTable(); toastShow('Order accepted — logistics can claim job');
+}
+
+function rejectOrder(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(!activeUser || activeUser.id!==o.farmerId){ alert('Not allowed'); return; }
+  o.status='rejected'; o.history.push({at:now(),msg:'Order rejected by farmer'});
+  // return qty to listing
+  const l = getListingById(o.listingId); if(l) l.qty += o.qty;
+  saveState(state); pushActivity(`Order ${o.id} rejected by farmer`);
+  renderOrdersTable(); renderListings(); toastShow('Order rejected');
+}
+
+// Logistics claims & status updates
+function claimJob(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(!activeUser || activeUser.role!=='logistics'){ openRegistration('logistics'); return; }
+  if(o.logisticsId && o.logisticsId!==activeUser.id){ alert('Already claimed'); return; }
+  o.logisticsId = activeUser.id; o.status='assigned'; o.history.push({at:now(),msg:`Assigned to logistics ${activeUser.name}`});
+  saveState(state); pushActivity(`${activeUser.name} claimed job ${o.id}`);
+  renderOrdersTable(); toastShow('Job claimed — update status as you progress');
+}
+
+function markPicked(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(o.logisticsId!==activeUser.id){ alert('You are not assigned'); return; }
+  o.status='picked'; o.history.push({at:now(),msg:'Picked up by logistics'});
+  saveState(state); pushActivity(`Job ${o.id} picked`);
+  renderOrdersTable(); toastShow('Marked as picked');
+}
+
+function markInTransit(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(o.logisticsId!==activeUser.id){ alert('You are not assigned'); return; }
+  o.status='in-transit'; o.history.push({at:now(),msg:'In transit'});
+  saveState(state); pushActivity(`Job ${o.id} in transit`);
+  renderOrdersTable(); toastShow('Marked in transit');
+}
+
+function markDelivered(orderId){
+  const o = getOrderById(orderId); if(!o) return;
+  if(o.logisticsId!==activeUser.id){ alert('You are not assigned'); return; }
+  o.status='delivered'; o.history.push({at:now(),msg:'Delivered'});
+  saveState(state); pushActivity(`Job ${o.id} delivered`);
+  renderOrdersTable(); toastShow('Marked delivered — order complete');
+}
+
+function viewOrder(id){
+  const o = getOrderById(id); if(!o) return;
+  const listing = getListingById(o.listingId) || {};
+  const buyer = getUserById(o.buyerId) || {};
+  const farmer = getUserById(o.farmerId) || {};
+  const logistics = getUserById(o.logisticsId) || {};
+  const historyHtml = (o.history||[]).map(h=>`<div style="margin:6px 0"><strong>${h.msg}</strong><div class="small-muted">${new Date(h.at).toLocaleString()}</div></div>`).join('');
+  const html = `<h3>Order ${o.id}</h3>
+    <div style="display:grid;gap:8px">
+      <div><strong>Crop:</strong> ${listing.crop}</div>
+      <div><strong>Qty:</strong> ${o.qty} ${listing.unit}</div>
+      <div><strong>Total:</strong> ₹${o.total}</div>
+      <div><strong>Buyer:</strong> ${buyer.name||'-'}</div>
+      <div><strong>Farmer:</strong> ${farmer.name||'-'}</div>
+      <div><strong>Logistics:</strong> ${logistics.name||'-'}</div>
+      <div><strong>Status:</strong> ${o.status}</div>
+      <hr>
+      <div><strong>History</strong>${historyHtml}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn secondary" onclick="hideModal()">Close</button>
+      </div>
+    </div>`;
+  showModal(html);
+}
+
+// misc features
+btnSearchListings.addEventListener('click', ()=> {
+  document.querySelector('.tab.active').classList.remove('active');
+  document.querySelector('.tab[data-tab="explore"]').classList.add('active');
+  panels.forEach(p=> p.style.display = p.dataset.panel === 'explore' ? '' : 'none');
+});
+
+btnMyOrders.addEventListener('click', ()=> {
+  document.querySelector('.tab.active').classList.remove('active');
+  document.querySelector('.tab[data-tab="orders"]').classList.add('active');
+  panels.forEach(p=> p.style.display = p.dataset.panel === 'orders' ? '' : 'none');
+});
+
+// Tab switcher
+mainTabs.addEventListener('click', (e)=>{
+  const t = e.target.closest('.tab');
+  if(!t) return;
+  document.querySelectorAll('.tab').forEach(tt=>tt.classList.remove('active'));
+  t.classList.add('active');
+  const selected = t.dataset.tab;
+  panels.forEach(p=> p.style.display = p.dataset.panel===selected ? '' : 'none');
+  if(selected==='orders') renderOrdersTable();
+  if(selected==='analytics') { updateTopCrops(); renderActivity(); }
+  if(selected==='logistics') renderJobs();
+});
+
+// Search & filters
+searchInput.addEventListener('input', (e)=> renderListings(e.target.value));
+filterCrop.addEventListener('change', ()=> renderListings(searchInput.value));
+
+// reset demo (clear storage)
+btnReset.addEventListener('click', ()=>{
+  if(!confirm('Reset demo data? This clears browser storage for this app.')) return;
+  localStorage.removeItem(LS_KEY);
+  state = loadState();
+  activeUser = null; activeRole='guest';
+  roleSwitch.value='guest';
+  renderAll();
+  toastShow('Demo reset');
+});
+
+// sign out
+function signOut(){ activeUser=null; activeRole='guest'; roleSwitch.value='guest'; renderAll(); toastShow('Signed out'); }
+
+// view order in modal etc.
+function renderAll(){
+  renderUsers();
+  renderActiveUser();
+  renderListings();
+  renderOrdersTable();
+  renderActivity();
+  renderJobs();
+}
+
+// initial seed + render
+seedDemo();
+renderAll();
+
+// helpful global functions for inline onclick handlers (exposed)
+window.viewProfile = viewProfile;
+window.impersonate = impersonate;
+window.openProfileForEdit = openProfileForEdit;
+window.createListing = createListing;
+window.openNewListing = openNewListing;
+window.viewListing = viewListing;
+window.openOrder = openOrder;
+window.placeOrder = placeOrder;
+window.cancelOrder = cancelOrder;
+window.acceptOrder = acceptOrder;
+window.rejectOrder = rejectOrder;
+window.claimJob = claimJob;
+window.markPicked = markPicked;
+window.markInTransit = markInTransit;
+window.markDelivered = markDelivered;
+window.viewOrder = viewOrder;
+window.registerUser = registerUser;
+window.openRegistration = openRegistration;
+window.signOut = signOut;
+
+</script>
+</body>
+</html>
