@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sugar Crush - Match 3 Game</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fff7f7;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { color: #ff3e6c; }
+    #score { font-size: 20px; margin-bottom: 10px; }
+    #board {
+      width: 400px;
+      height: 400px;
+      display: flex;
+      flex-wrap: wrap;
+      background: #ffe3ec;
+      border: 5px solid #ff3e6c;
+      border-radius: 10px;
+    }
+    .candy {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      margin: 2px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .candy:active { transform: scale(0.9); }
+  </style>
+</head>
+<body>
+
+<h1>🍭 Sugar Crush 🍬 By Monisha</h1>
+<div id="score">Score: 0</div>
+<div id="board"></div>
+
+<script>
+  const board = document.getElementById('board');
+  const scoreDisplay = document.getElementById('score');
+  const width = 8;
+  const candies = [];
+  let score = 0;
+
+  const candyColors = ['#ff3e6c', '#ffbf00', '#00d084', '#8e6eff', '#4dd2ff'];
+
+  // Create board
+  function createBoard() {
+    for (let i = 0; i < width * width; i++) {
+      const candy = document.createElement('div');
+      candy.classList.add('candy');
+      candy.style.backgroundColor = getRandomCandy();
+      candy.setAttribute('draggable', true);
+      candy.setAttribute('data-id', i);
+      board.appendChild(candy);
+      candies.push(candy);
+    }
+  }
+
+  function getRandomCandy() {
+    return candyColors[Math.floor(Math.random() * candyColors.length)];
+  }
+
+  // Drag and Swap
+  let colorBeingDragged;
+  let colorBeingReplaced;
+  let squareIdDragged;
+  let squareIdReplaced;
+
+  candies.forEach(candy => {
+    candy.addEventListener('dragstart', dragStart);
+    candy.addEventListener('dragover', dragOver);
+    candy.addEventListener('drop', dragDrop);
+    candy.addEventListener('dragend', dragEnd);
+  });
+
+  function dragStart() {
+    colorBeingDragged = this.style.backgroundColor;
+    squareIdDragged = parseInt(this.getAttribute('data-id'));
+  }
+
+  function dragOver(e) {
+    e.preventDefault();
+  }
+
+  function dragDrop() {
+    colorBeingReplaced = this.style.backgroundColor;
+    squareIdReplaced = parseInt(this.getAttribute('data-id'));
+    this.style.backgroundColor = colorBeingDragged;
+    candies[squareIdDragged].style.backgroundColor = colorBeingReplaced;
+  }
+
+  function dragEnd() {
+    const validMoves = [
+      squareIdDragged - 1,
+      squareIdDragged + 1,
+      squareIdDragged - width,
+      squareIdDragged + width
+    ];
+    if (!validMoves.includes(squareIdReplaced)) {
+      candies[squareIdDragged].style.backgroundColor = colorBeingDragged;
+      candies[squareIdReplaced].style.backgroundColor = colorBeingReplaced;
+    } else {
+      setTimeout(checkMatches, 100);
+    }
+  }
+
+  // Match Checking
+  function checkMatches() {
+    // Row Match
+    for (let i = 0; i < 64; i++) {
+      const row = [i, i+1, i+2];
+      if (row.every(idx => candies[idx] && candies[idx].style.backgroundColor === candies[i].style.backgroundColor)) {
+        row.forEach(idx => candies[idx].style.backgroundColor = '');
+        score += 30;
+        scoreDisplay.textContent = 'Score: ' + score;
+      }
+    }
+
+    // Column Match
+    for (let i = 0; i < 48; i++) {
+      const col = [i, i+8, i+16];
+      if (col.every(idx => candies[idx] && candies[idx].style.backgroundColor === candies[i].style.backgroundColor)) {
+        col.forEach(idx => candies[idx].style.backgroundColor = '');
+        score += 30;
+        scoreDisplay.textContent = 'Score: ' + score;
+      }
+    }
+
+    dropCandies();
+  }
+
+  function dropCandies() {
+    for (let i = 0; i < 64 - width; i++) {
+      if (candies[i + width].style.backgroundColor === '') {
+        candies[i + width].style.backgroundColor = candies[i].style.backgroundColor;
+        candies[i].style.backgroundColor = '';
+      }
+      if (i < width && candies[i].style.backgroundColor === '') {
+        candies[i].style.backgroundColor = getRandomCandy();
+      }
+    }
+  }
+
+  createBoard();
+  setInterval(checkMatches, 200);
+</script>
+
+</body>
+</html>
