@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GST Calculator by S.S. Aishwarya</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label, select, input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+    }
+    input, select {
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+      background: #e0ffe0;
+      padding: 15px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>GST Calculator</h2>
+
+  <label for="amount">Enter Price (₹):</label>
+  <input type="number" id="amount" placeholder="e.g. 1000" />
+
+  <label for="gstRate">Select GST Rate:</label>
+  <select id="gstRate">
+    <option value="5">5%</option>
+    <option value="12">12%</option>
+    <option value="18">18%</option>
+    <option value="28">28%</option>
+  </select>
+
+  <button onclick="calculateGST()">Calculate</button>
+
+  <div class="result" id="result" style="display: none;">
+    <p><strong>GST Amount:</strong> ₹<span id="gstAmount"></span></p>
+    <p><strong>Total Price (Including GST):</strong> ₹<span id="totalAmount"></span></p>
+  </div>
+
+  <script>
+    function calculateGST() {
+      let amount = parseFloat(document.getElementById("amount").value);
+      let gstRate = parseFloat(document.getElementById("gstRate").value);
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount.");
+        return;
+      }
+
+      let gstAmount = (amount * gstRate) / 100;
+      let totalAmount = amount + gstAmount;
+
+      document.getElementById("gstAmount").textContent = gstAmount.toFixed(2);
+      document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
