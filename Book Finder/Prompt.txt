@@ -1,1 +1,1 @@
-Book finder Prompt
+Create a web app using only one file or using all in one file(htm+js+css), keep the app modern , we have to get the input as a particular book name and the app should give details about where should we get that books like a library or a nearby store or in any website can you create it
