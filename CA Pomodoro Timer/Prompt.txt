@@ -1,0 +1,135 @@
+First Prompt:
+
+You are an expert full-stack developer and UX designer. Build a production-ready, responsive single-
+page Pomodoro web app tailored for a CA (Chartered Accountant) student preparing professional
+exams. Deliver a working app (frontend + backend) with deployable code, hosting setup, and a
+README for maintenance and deployment.
+
+PRIMARY GOAL
+- A focused study tool that combines Pomodoro timers with task/subject management, study-plan
+features, analytics, and exam-oriented workflows. The app must be intuitive for prolonged study
+sessions and configurable for different study strategies.
+
+TECH STACK (preferred)
+- Frontend: React (functional components + hooks), TypeScript, Tailwind CSS, accessible semantics.
+- Backend: Supabase (Postgres) or a minimal serverless API (Node/Express) + Postgres if Supabase
+not available.
+- Auth: email/password + Google OAuth optional.
+- Deployment: configure for Bolt.new hosting (or exportable to Netlify/Vercel). Provide demo
+credentials and a deploy script.
+
+CORE FEATURES (MUST HAVE)
+1. Pomodoro Timer
+- Configurable intervals: work (default 25m), short break (default 5m), long break (default 20m).
+- Option to set custom cycles (e.g., 4 cycles then long break).
+- Start / Pause / Reset, keyboard shortcuts, audible and visual notifications.
+- “Deep focus” mode: hides UI chrome, disables notifications from the app except timer end.
+
+2. Tasks &amp; Subjects
+- Create tasks with: title, subject (Audit/Tax/OM/SM/IDT etc. — use CA subject defaults), estimated
+pomodoros, priority, tags, notes.
+- Drag-and-drop ordering and quick-start buttons (start timer for a specific task).
+- Task history showing completed pomodoros and time spent.
+
+3. Study Planner &amp; Revision Scheduler
+
+- Allow user to input exam date(s) and number of days available; auto-generate a revision schedule
+splitting topics across days with suggested pomodoro blocks.
+- Spaced repetition flag per task (low/medium/high) to schedule next revision session
+automatically.
+
+4. Analytics &amp; Progress
+- Daily/Weekly/Monthly dashboard: pomodoros completed, hours studied, longest focus streak,
+subject-wise time breakdown (pie chart).
+- Export CSV of session logs.
+- Streaks, milestones, badges (optional gamification).
+
+5. Notifications &amp; Integrations
+- Desktop notifications and sound; in-browser push reminders to start study at scheduled times.
+- Optional Google Calendar sync: push scheduled study sessions (user opt-in).
+- Local offline mode: timer works even without network; syncs when back online.
+
+6. Focus Tools
+- Minimal ambient sound player (white noise / rain / binaural beats) with volume control.
+- “Blockers” mode: toggles to hide distracting elements and optionally block a configured list of
+websites (via link to browser extension instructions — not implementing extension itself).
+
+7. UI / UX
+- Light + Dark themes; persistent user preference.
+- Language: English default, with an option to enable Tamil translations for UI strings.
+- Mobile-first responsive layout with large touch targets for phone use.
+- Accessibility: ARIA labels, keyboard navigation, reduced motion option.
+
+8. Data model &amp; reliability
+- Persist users, tasks, session logs, preferences in DB.
+- Provide migrations/schema file and a seed dataset (sample CA subjects &amp; tasks).
+- Backups: explain an approach (e.g., nightly export for Supabase).
+
+9. Security &amp; Privacy
+- Store minimal personally identifiable info; encrypt sensitive tokens.
+- Provide an export &amp; delete account button that removes user data from DB.
+
+ACCEPTANCE CRITERIA / TEST CASES
+- A new user can sign up and create a task, start a 25m timer assigned to that task, complete two
+pomodoros and see them logged in the task history and dashboard.
+- Setting an exam date and choosing &quot;Auto-plan&quot; generates a day-by-day schedule with assigned
+pomodoro counts.
+- Google Calendar sync creates events for planned study sessions (if user allows OAuth).
+- Timer works offline and syncs session logs once online.
+- Exported CSV contains fields: session_id, user_id, task_id, subject, start_time, end_time,
+duration_minutes, notes.
+
+DELIVERABLES
+- Full source code in a Git repo (provide link or export).
+- README with: setup, environment vars, deployment steps, architecture diagram, and how to
+change default CA subjects.
+- Basic unit tests for timer logic and planner generation.
+- Demo user credentials and a short screencast/GIF showing core flows.
+
+UI SPEC &amp; COPY
+- Provide a compact main screen: Left = subject/task list, Center = large timer and current task card,
+Right = analytics/quick stats.
+- Use concise copy: e.g., &quot;Start Focus&quot;, &quot;Short Break&quot;, &quot;Long Break&quot;, &quot;Log Session&quot;, &quot;Plan Revision&quot;.
+- Include settings modal for durations, themes, languages, calendar sync, and exam-date input.
+
+PERFORMANCE &amp; CODE QUALITY
+- Clean, modular code; components reusable; TypeScript types for data models.
+- Ensure timer accuracy (no drift) using system timestamps; tests to validate accuracy over repeated
+start/stop cycles.
+
+NICE-TO-HAVE (if time permits)
+
+- Pomodoro templates for different study modes (Focused Reading, Practice Questions, Mock Test).
+- Integration with anki-style flashcard export for spaced-repetition tasks.
+- Import tasks from CSV and simple OCR scanning of handwritten notes (bonus).
+
+DEVELOPER NOTES
+- Provide a clear API spec (OpenAPI or simple REST docs).
+- Use supabase/SQL scripts for schema and seeds.
+- Add environment variable placeholders for Google OAuth, Supabase URL/Key, and hosting config.
+
+UX EDGE CASES
+- When user session interrupted (browser closed), persist start timestamp so session resumes or logs
+partial session correctly.
+- If user changes timer durations mid-cycle, decide either to continue until original end or
+restart—expose both options in settings.
+
+UX / Visual sketch
+- Provide 2 quick wireframes: (1) Desktop main view, (2) Mobile main view. Include exact layout
+notes for responsive breakpoints.
+
+DEVELOPER INSTRUCTION FOR YOU (Bolt agent)
+- Do not ask follow-up questions; generate a working full-stack app scaffold implementing MUST
+HAVE features first.
+- If multiple design choices arise, pick defaults that favor study reliability and low friction.
+- Provide a &quot;demo mode&quot; with seeded user and tasks to try features immediately.
+- Include unit tests for planner algorithm and timer.
+
+OUTPUT FORMAT (in the project)
+- README, src/, tests/, db/schema.sql, db/seed.sql, .env.example, deploy script.
+
+Second Prompt:
+
+Can you convert this code into .html format so that i can opening anywhere using any browser
+
+Can you convert this code into .html format so that i can opening anywhere
