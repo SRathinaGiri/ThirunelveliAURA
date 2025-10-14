@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Transaction Classifier</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; /* Changed margin to 0 */
+            padding: 20px; /* Added padding to body for overall spacing */
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            min-height: 80vh; /* Ensures content pushes footer down */
+        }
+        h1 {
+            color: #3182ce;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .mode-switcher {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .mode-switcher button {
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            flex-grow: 1;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #edf2f7;
+            color: #4a5568;
+        }
+        .mode-switcher button:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+        .mode-switcher button:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+        .mode-switcher button.active {
+            background-color: #3182ce;
+            color: white;
+            box-shadow: 0 2px 5px rgba(49, 130, 206, 0.5);
+        }
+        .mode-content {
+            display: none;
+        }
+        .mode-content.active {
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 150px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        #classifySingleBtn, #classifyBatchBtn {
+            background-color: #38a169;
+            color: white;
+        }
+        #classifySingleBtn:hover, #classifyBatchBtn:hover {
+            background-color: #2f855a;
+        }
+        #clearBtn {
+            background-color: #e53e3e;
+            color: white;
+        }
+        #clearBtn:hover {
+            background-color: #c53030;
+        }
+        #exportBtn {
+            background-color: #4c51bf;
+            color: white;
+            display: none; /* Hidden by default */
+        }
+        #exportBtn:hover {
+            background-color: #434190;
+        }
+        #loadSampleBtn {
+            background-color: #f6ad55;
+            color: white;
+        }
+        #loadSampleBtn:hover {
+            background-color: #dd8c3f;
+        }
+        .input-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #718096;
+        }
+        .example-chips {
+            margin-bottom: 20px;
+        }
+        .example-chip {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            background-color: #e2e8f0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .example-chip:hover {
+            background-color: #cbd5e0;
+        }
+        
+        /* Results Section Styling */
+        #resultsSection {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        /* Summary Cards */
+        #summaryCards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        .summary-card.total {
+            background-color: #3182ce;
+        }
+        .summary-card.success {
+            background-color: #38a169;
+        }
+        .summary-card.warning {
+            background-color: #d69e2e;
+        }
+        .summary-card-header {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .summary-card-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .summary-card-label {
+            font-size: 16px;
+        }
+
+        /* Result Card */
+        .result-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .result-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .result-narration {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        .result-badges span {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .confidence-high { background-color: #b2f5ea; color: #319795; }
+        .confidence-medium { background-color: #faf089; color: #b7791f; }
+        .confidence-low { background-color: #fed7d7; color: #c53030; }
+        .payment-cash { background-color: #e9d8fd; color: #805ad5; }
+        .payment-bank { background-color: #c3dafe; color: #4c51bf; }
+        .expense-badge { background-color: #f7fafc; color: #333; border: 1px solid #e2e8f0; }
+
+        /* Table Styling */
+        .entry-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        .entry-table th, .entry-table td {
+            border: 1px solid #ebf8ff;
+            padding: 10px;
+            text-align: left;
+        }
+        .entry-table th {
+            background-color: #e0f2f1;
+            color: #004d40;
+            font-weight: 600;
+        }
+        .entry-table tbody tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        .totals-row {
+            font-weight: bold;
+            background-color: #e6fffa !important;
+            color: #004d40;
+        }
+        .debit-amount, .credit-amount {
+            font-family: monospace;
+            text-align: right;
+        }
+
+        /* Reasoning Box */
+        .reasoning-box {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #ebf8ff;
+            border-radius: 4px;
+            border-left: 4px solid #3182ce;
+        }
+        .reasoning-title {
+            font-weight: bold;
+            color: #3182ce;
+            margin-bottom: 5px;
+        }
+        .reasoning-text {
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #4a5568;
+        }
+
+        /* Processing Status */
+        #processingStatus {
+            display: none;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeeba;
+            font-weight: 600;
+        }
+        #processingStatus.active {
+            display: block;
+        }
+        .progress-bar-container {
+            height: 10px;
+            background-color: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #3182ce;
+            transition: width 0.3s;
+            text-align: center;
+            line-height: 10px;
+            color: white;
+            font-size: 0.7em;
+        }
+
+        /* Footer Styling */
+        .footer {
+            margin-top: 30px;
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 0.9em;
+        }
+        .footer-title {
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Transaction Classifier by Kaliappan</h1>
+
+        <div class="mode-switcher">
+            <button id="singleModeBtn" class="active">Single Transaction Mode</button>
+            <button id="batchModeBtn">Batch Processing Mode</button>
+        </div>
+
+        <div id="processingStatus">
+            <span id="workerStatus">Processing...</span>
+            <div class="progress-bar-container">
+                <div id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div id="singleMode" class="mode-content active single-mode">
+            <p>Enter a single transaction narration below (e.g., "Petrol for co car Rs. 5,000"):</p>
+            <textarea id="singleNarrationInput" rows="3" placeholder="Enter narration here..."></textarea>
+            <div class="example-chips" id="exampleChips">
+                <span class="example-chip">Lunch for client meet ₹3,500</span>
+                <span class="example-chip">AMC - ACs HO Rs. 8,000</span>
+                <span class="example-chip">Bank charges for Oct Rs. 1,200</span>
+            </div>
+            <button id="classifySingleBtn">Classify Transaction</button>
+        </div>
+
+        <div id="batchMode" class="mode-content batch-mode">
+            <p>Paste multiple transaction narrations, each on a new line:</p>
+            <textarea id="batchNarrationInput" rows="8" placeholder="Enter narrations here (one per line)..."></textarea>
+            <div class="input-info">
+                <span id="transactionCounter">0 transactions</span>
+                <div class="button-group">
+                    <button id="loadSampleBtn">Load Sample Data</button>
+                    <button id="clearBtn">Clear All</button>
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="classifyBatchBtn">Process Batch</button>
+                <button id="exportBtn">Export to CSV</button>
+            </div>
+        </div>
+
+        <section id="resultsSection" style="display:none;">
+            <h2>📊 Classification Results</h2>
+            <div id="summaryCards"></div>
+            <div id="resultsContainer">
+                </div>
+        </section>
+
+    </div>
+
+    <footer class="footer">
+        <div class="footer-title">Transaction Classifier</div>
+        R.Kaliappan
+ 	</footer>
+    <script>
+        // Comprehensive Database from 1000+ transactions        
+        const EXPENSE_DATABASE = {
+            'antivirus': { group: 'IT & Software Expenses', ledger: 'IT and Software Expenses Ledger' },
+            'snacks': { group: 'Staff Welfare', ledger: 'Staff Welfare Ledger' },
+            'letterhead': { group: 'Printing & Stationery', ledger: 'Printing and Stationery Ledger' },
+            'tax advisor': { group: 'Professional Fees', ledger: 'Professional Fees Ledger' },
+            'taxi': { group: 'Conveyance', ledger: 'Conveyance Ledger' },
+            'fuel': { group: 'Fuel Expenses', ledger: 'Fuel Expenses Ledger' },
+            'petrol': { group: 'Fuel Expenses', ledger: 'Fuel Expenses Ledger' },
+            'diesel': { group: 'Fuel Expenses', ledger: 'Fuel Expenses Ledger' },
+            'chq return': { group: 'Bank Charges', ledger: 'Bank Charges Ledger' },
+            'bus tkt': { group: 'Travelling Expenses', ledger: 'Travelling Expenses Ledger' },
+            'train': { group: 'Travelling Expenses', ledger: 'Travelling Expenses Ledger' },
+            'dg maint': { group: 'Repairs & Maintenance', ledger: 'Repairs and Maintenance Ledger' },
+            'ad exp': { group: 'Advertisement Expenses', ledger: 'Advertisement Expenses Ledger' },
+            'paper': { group: 'Printing & Stationery', ledger: 'Printing and Stationery Ledger' },
+            'cab': { group: 'Conveyance', ledger: 'Conveyance Ledger' },
+            'dg power': { group: 'Power & Electricity', ledger: 'Power and Electricity Ledger' },
+            'office365': { group: 'IT & Software Expenses', ledger: 'IT and Software Expenses Ledger' },
+            'lunch': { group: 'Employee Welfare', ledger: 'Employee Welfare Ledger' },
+            'emp welfare': { group: 'Employee Welfare', ledger: 'Employee Welfare Ledger' },
+            'software': { group: 'IT & Software Expenses', ledger: 'IT and Software Expenses Ledger' },
+            'canva': { group: 'IT & Software Expenses', ledger: 'IT and Software Expenses Ledger' },
+            'penalty': { group: 'Statutory Payments', ledger: 'Statutory Payments Ledger' },
+            'rent': { group: 'Rent', ledger: 'Rent Ledger' },
+            'server amc': { group: 'IT & Software Expenses', ledger: 'IT and Software Expenses Ledger' },
+            'phone': { group: 'Communication Expenses', ledger: 'Communication Expenses Ledger' },
+            'birthday': { group: 'Staff Welfare', ledger: 'Staff Welfare Ledger' },
+            'promo gifts': { group: 'Business Promotion', ledger: 'Business Promotion Ledger' },
+            'gst': { group: 'Statutory Payments', ledger: 'Statutory Payments Ledger' },
+            'atm': { group: 'Bank Charges', ledger: 'Bank Charges Ledger' },
+            'salary': { group: 'Salaries & Wages', ledger: 'Salaries and Wages Ledger' },
+            'sal for': { group: 'Salaries & Wages', ledger: 'Salaries and Wages Ledger' },
+            'pt paid': { group: 'Statutory Payments', ledger: 'Statutory Payments Ledger' },
+            'tea': { group: 'Staff Welfare', ledger: 'Staff Welfare Ledger' },
+            'coffee': { group: 'Staff Welfare', ledger: 'Staff Welfare Ledger' },
+            'int on cc': { group: 'Interest Expense', ledger: 'Interest Expense Ledger' },
+            'interest': { group: 'Interest Expense', ledger: 'Interest Expense Ledger' },
+            'tds': { group: 'Statutory Payments', ledger: 'Statutory Payments Ledger' },
+            'bnk chrgs': { group: 'Bank Charges', ledger: 'Bank Charges Ledger' },
+            'bank charges': { group: 'Bank Charges', ledger: 'Bank Charges Ledger' },
+            'warehouse': { group: 'Rent', ledger: 'Rent Ledger' },
+            'newspaper': { group: 'Advertisement Expenses', ledger: 'Advertisement Expenses Ledger' },
+            'stationery': { group: 'Printing & Stationery', ledger: 'Printing and Stationery Ledger' },
+            'stnry': { group: 'Printing & Stationery', ledger: 'Printing and Stationery Ledger' },
+            'laptop': { group: 'Repairs & Maintenance', ledger: 'Repairs and Maintenance Ledger' },
+            'ac service': { group: 'Office Maintenance', ledger: 'Office Maintenance Ledger' },
+            'printer': { group: 'Printing & Stationery', ledger: 'Printing and Stationery Ledger' },
+            'loan int': { group: 'Interest Expense', ledger: 'Interest Expense Ledger' },
+            'amc': { group: 'Repairs & Maintenance', ledger: 'Repairs and Maintenance Ledger' },
+            'insurance': { group: 'Insurance Expenses', ledger: 'Insurance Expenses Ledger' },
+            'bldg ins': { group: 'Insurance Expenses', ledger: 'Insurance Expenses Ledger' },
+            'temp staff': { group: 'Salaries & Wages', ledger: 'Salaries and Wages Ledger' },
+            'remit': { group: 'Bank Charges', ledger: 'Bank Charges Ledger' },
+            'travel': { group: 'Travelling Expenses', ledger: 'Travelling Expenses Ledger' },
+            'power bill': { group: 'Power & Electricity', ledger: 'Power and Electricity Ledger' },
+            'eb bill': { group: 'Power & Electricity', ledger: 'Power and Electricity Ledger' },
+            'electricity': { group: 'Power & Electricity', ledger: 'Power and Electricity Ledger' },
+            'breakfast': { group: 'Employee Welfare', ledger: 'Employee Welfare Ledger' },
+            'dinner': { group: 'Staff Welfare', ledger: 'Staff Welfare Ledger' },
+            'fire ins': { group: 'Insurance Expenses', ledger: 'Insurance Expenses Ledger' },
+            'legal': { group: 'Professional Fees', ledger: 'Professional Fees Ledger' },
+            'audit': { group: 'Professional Fees', ledger: 'Professional Fees Ledger' },
+            'od int': { group: 'Interest Expense', ledger: 'Interest Expense Ledger' },
+            'ups service': { group: 'Repairs & Maintenance', ledger: 'Repairs and Maintenance Ledger' },
+            'emp ins': { group: 'Insurance Expenses', ledger: 'Insurance Expenses Ledger' },
+            'google ads': { group: 'Advertisement Expenses', ledger: 'Advertisement Expenses Ledger' },
+            'vehicle ins': { group: 'Insurance Expenses', ledger: 'Insurance Expenses Ledger' },
+            // Add other keywords as needed...
+        };
+
+
+        // --- JAVASCRIPT TO MAKE BUTTONS WORK ---
+
+        // DOM Element References
+        const singleModeBtn = document.getElementById('singleModeBtn');
+        const batchModeBtn = document.getElementById('batchModeBtn');
+        const singleMode = document.querySelector('.single-mode');
+        const batchMode = document.querySelector('.batch-mode');
+        const singleNarrationInput = document.getElementById('singleNarrationInput');
+        const classifySingleBtn = document.getElementById('classifySingleBtn');
+        const batchNarrationInput = document.getElementById('batchNarrationInput');
+        const classifyBatchBtn = document.getElementById('classifyBatchBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const transactionCounter = document.getElementById('transactionCounter');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const summaryCards = document.getElementById('summaryCards');
+        const processingStatus = document.getElementById('processingStatus');
+        const progressBar = document.getElementById('progressBar');
+        const workerStatus = document.getElementById('workerStatus');
+        const exampleChips = document.getElementById('exampleChips');
+
+        // Default Ledger Names
+        const LEDGER_BANK = 'Bank Account Ledger';
+        const LEDGER_CASH = 'Cash Account Ledger';
+
+        // --- Core Classification Logic ---
+
+        /**
+         * Extracts amount and expense details from a narration string.
+         * @param {string} narration The transaction text.
+         * @returns {object} { amount: number, group: string, ledger: string, confidence: string }
+         */
+        function classifyTransaction(narration) {
+            const text = narration.toLowerCase();
+            
+            // --- UPDATED AMOUNT EXTRACTION LOGIC ---
+            
+            // Pattern 1: Indicator before number (e.g., Rs. 5,000) -> Captures in Group 1
+            // Pattern 2: Number before indicator (e.g., 5,000 Rs.) or multiplier (e.g., 5 lakh) -> Captures in Group 2 & 3
+            const amountMatch = text.match(
+                /(?:rs\.?|₹)\s*(\d[\d,\.]*)|(\d[\d,\.]*)\s*(rs\.?|₹|lakh|lac|k)/
+            );
+
+            let amount = 0;
+
+            if (amountMatch) {
+                // amountMatch[1] captures the amount from pattern 1 (Rs. 5,000)
+                // amountMatch[2] captures the amount from pattern 2 (5,000 Rs.)
+                let amountString = amountMatch[1] || amountMatch[2];
+                
+                // amountMatch[3] captures the multiplier/indicator from pattern 2 (lakh, k)
+                let indicator = amountMatch[3]; 
+
+                if (amountString) {
+                    // 1. Clean the number string by removing commas
+                    amountString = amountString.replace(/,/g, '');
+                    amount = parseFloat(amountString);
+                }
+
+                // 2. Adjust for multipliers (Lakh, K)
+                if (indicator && amount > 0) {
+                    if (indicator.includes('lakh') || indicator.includes('lac')) {
+                        amount *= 100000;
+                    } else if (indicator.includes('k')) {
+                        amount *= 1000;
+                    }
+                }
+                
+                if (isNaN(amount)) {
+                    amount = 0;
+                }
+            }
+            // --- END UPDATED AMOUNT EXTRACTION LOGIC ---
+
+
+            // 2. Keyword Matching
+            let expenseData = { group: 'Unclassified Expense', ledger: 'Suspense/Unclassified Ledger' };
+            let confidence = 'low';
+            
+            const keywords = Object.keys(EXPENSE_DATABASE).sort((a, b) => b.length - a.length);
+
+            for (const keyword of keywords) {
+                if (text.includes(keyword)) {
+                    expenseData = EXPENSE_DATABASE[keyword];
+                    confidence = 'high';
+                    break; 
+                }
+            }
+            
+            if (confidence === 'low' && expenseData.group === 'Unclassified Expense' && amount > 0) {
+                confidence = 'medium';
+            }
+
+            // 3. Payment Mode Rule
+            const paymentMode = amount <= 10000 ? 'Cash' : 'Bank';
+            const paymentLedger = paymentMode === 'Cash' ? LEDGER_CASH : LEDGER_BANK;
+            
+            return {
+                narration: narration,
+                amount: Math.round(amount),
+                ...expenseData,
+                paymentMode,
+                paymentLedger,
+                confidence
+            };
+        }
+
+        // --- Rendering Functions ---
+
+        /**
+         * Generates the HTML for a single transaction result card.
+         * @param {object} result The classified transaction object.
+         */
+        function renderResultCard(result) {
+            const confidenceClass = {
+                'high': 'confidence-high',
+                'medium': 'confidence-medium',
+                'low': 'confidence-low'
+            }[result.confidence];
+            
+            const paymentClass = result.paymentMode === 'Cash' ? 'payment-cash' : 'payment-bank';
+            
+            // Generate Standardized Narration for the Entry
+            const standardizedNarration = `Being ${result.group} of ₹${result.amount.toLocaleString('en-IN')} paid by ${result.paymentMode}. Original Narration: ${result.narration}`;
+
+            // Simple Reasoning Construction
+            let reasoning = `Identified **'${result.ledger.replace(' Ledger', '')}'** based on keyword matching.`;
+            if (result.confidence === 'low') {
+                reasoning = `Could not find a specific keyword. Classified as **Suspense**. Amount was extracted: ₹${result.amount.toLocaleString('en-IN')}.`;
+            }
+            reasoning += ` Amount > ₹10,000 rule applied: payment is assigned to **${result.paymentLedger}**.`;
+
+
+            return `
+            <div class="result-card">
+                <div class="result-header">
+                    <div class="result-narration">Original Narration: **${result.narration}**</div>
+                    <div class="result-badges">
+                        <span class="confidence-badge ${confidenceClass}">${result.confidence.toUpperCase()} Confidence</span>
+                        <span class="expense-badge">${result.group}</span>
+                        <span class="payment-badge ${paymentClass}">Paid by ${result.paymentMode}</span>
+                    </div>
+                </div>
+                <table class="entry-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Account / Ledger</th>
+                            <th>Debit (₹)</th>
+                            <th>Credit (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DR</td>
+                            <td>${result.ledger}</td>
+                            <td class="debit-amount">${result.amount.toLocaleString('en-IN')}</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>CR</td>
+                            <td>${result.paymentLedger}</td>
+                            <td>0</td>
+                            <td class="credit-amount">${result.amount.toLocaleString('en-IN')}</td>
+                        </tr>
+                        <tr class="totals-row">
+                            <td colspan="2">**TOTAL**</td>
+                            <td>**${result.amount.toLocaleString('en-IN')}**</td>
+                            <td>**${result.amount.toLocaleString('en-IN')}**</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="reasoning-box">
+                    <div class="reasoning-title">AI Reasoning & Standardized Narration:</div>
+                    <div class="reasoning-text">
+                        **Standardized Narration:** ${standardizedNarration}
+                        <hr style="margin: 8px 0; border-color: #90cdf4;">
+                        ${reasoning}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        /**
+         * Generates the HTML for the summary cards section.
+         * @param {Array<object>} results Array of classified transaction objects.
+         */
+        function renderSummary(results) {
+            const totalCount = results.length;
+            const highConfidenceCount = results.filter(r => r.confidence === 'high').length;
+            const lowConfidenceCount = results.filter(r => r.confidence === 'low').length;
+
+            summaryCards.innerHTML = `
+                <div class="summary-card total">
+                    <div class="summary-card-header">Total Processed</div>
+                    <div class="summary-card-value">${totalCount}</div>
+                    <div class="summary-card-label">Transactions</div>
+                </div>
+                <div class="summary-card success">
+                    <div class="summary-card-header">High Confidence</div>
+                    <div class="summary-card-value">${highConfidenceCount}</div>
+                    <div class="summary-card-label">${totalCount > 0 ? ((highConfidenceCount / totalCount) * 100).toFixed(1) : 0}% Accuracy</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="summary-card-header">Low/Suspense</div>
+                    <div class="summary-card-value">${lowConfidenceCount}</div>
+                    <div class="summary-card-label">Manual Review Needed</div>
+                </div>
+            `;
+        }
+
+        // --- Event Handlers ---
+
+        // 1. Mode Switcher
+        singleModeBtn.addEventListener('click', () => {
+            singleModeBtn.classList.add('active');
+            batchModeBtn.classList.remove('active');
+            singleMode.classList.add('active');
+            batchMode.classList.remove('active');
+            resultsSection.style.display = 'none'; // Hide results on mode switch
+        });
+
+        batchModeBtn.addEventListener('click', () => {
+            batchModeBtn.classList.add('active');
+            singleModeBtn.classList.remove('active');
+            batchMode.classList.add('active');
+            singleMode.classList.remove('active');
+            resultsSection.style.display = 'none'; // Hide results on mode switch
+        });
+
+        // 2. Single Transaction Classification
+        classifySingleBtn.addEventListener('click', () => {
+            const narration = singleNarrationInput.value.trim();
+            if (!narration) {
+                alert('Please enter a transaction narration.');
+                return;
+            }
+            
+            resultsContainer.innerHTML = '';
+            
+            // Simulate processing status briefly
+            processingStatus.classList.add('active');
+            progressBar.style.width = '0%';
+            workerStatus.textContent = 'Processing 1 of 1';
+
+            setTimeout(() => {
+                const result = classifyTransaction(narration);
+                const resultHTML = renderResultCard(result);
+
+                resultsContainer.innerHTML = resultHTML;
+                renderSummary([result]); // Summary for a single result
+                resultsSection.style.display = 'block';
+                processingStatus.classList.remove('active');
+                progressBar.style.width = '100%';
+                exportBtn.style.display = 'none'; // No export for single mode
+            }, 500);
+        });
+
+        // 3. Batch Transaction Processing
+        classifyBatchBtn.addEventListener('click', () => {
+            const narrations = batchNarrationInput.value.trim().split('\n').filter(line => line.trim() !== '');
+            if (narrations.length === 0) {
+                alert('Please enter transactions in the batch input area.');
+                return;
+            }
+            
+            resultsContainer.innerHTML = '';
+            const totalTransactions = narrations.length;
+            let completedCount = 0;
+            const allResults = [];
+            
+            processingStatus.classList.add('active');
+            classifyBatchBtn.disabled = true;
+            exportBtn.style.display = 'none'; 
+
+            const processNext = () => {
+                if (completedCount < totalTransactions) {
+                    const narration = narrations[completedCount];
+                    const result = classifyTransaction(narration);
+                    allResults.push(result);
+                    
+                    // Update Progress Bar
+                    completedCount++;
+                    const progress = (completedCount / totalTransactions) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    workerStatus.textContent = `${completedCount} of ${totalTransactions} completed`;
+                    progressBar.textContent = `${Math.round(progress)}%`;
+                    
+                    // Render the result immediately
+                    resultsContainer.innerHTML += renderResultCard(result);
+                    
+                    // Simulate parallel/fast processing
+                    setTimeout(processNext, 50); // Small delay to simulate work and update UI
+                } else {
+                    // Processing Finished
+                    renderSummary(allResults);
+                    resultsSection.style.display = 'block';
+                    processingStatus.classList.remove('active');
+                    classifyBatchBtn.disabled = false;
+                    exportBtn.style.display = 'flex'; // Show export button
+                    
+                    // Store results globally for export
+                    window.lastBatchResults = allResults;
+                }
+            };
+            
+            processNext();
+        });
+
+        // 4. Input Counter and Examples
+        batchNarrationInput.addEventListener('input', () => {
+            const count = batchNarrationInput.value.trim().split('\n').filter(line => line.trim() !== '').length;
+            transactionCounter.textContent = `${count} transactions`;
+        });
+
+        // Example Chip Clicks
+        exampleChips.querySelectorAll('.example-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                singleNarrationInput.value = chip.textContent;
+            });
+        });
+
+        // 5. Clear Button
+        clearBtn.addEventListener('click', () => {
+            batchNarrationInput.value = '';
+            transactionCounter.textContent = '0 transactions';
+            resultsSection.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            summaryCards.innerHTML = '';
+            exportBtn.style.display = 'none';
+            window.lastBatchResults = [];
+        });
+
+        // 6. Load Sample Button
+        loadSampleBtn.addEventListener('click', () => {
+            const sampleText = [
+                "EB bill Apr'25 HO Rs. 15,000",
+                "Rent – Chennai branch Rs. 50,000",
+                "Petrol for co car – Blr visit Rs. 5,000",
+                "AMC – ACs HO Rs. 8,000",
+                "Lunch for client meeting Rs. 3,500",
+                "Laptop repair for manager Rs. 12,000",
+                "Monthly software subscription Rs. 1,500",
+                "Bank charges for Oct Rs. 1,200",
+                "Taxi to airport Rs. 800",
+                "Insurance premium – building Rs. 60,000",
+                "Legal fees for contract review Rs. 22,000",
+                "Coffee for team meet Rs. 500"
+            ].join('\n');
+            
+            batchNarrationInput.value = sampleText;
+            batchNarrationInput.dispatchEvent(new Event('input')); // Update counter
+        });
+
+        // 7. Export Button (CSV)
+        exportBtn.addEventListener('click', () => {
+            const results = window.lastBatchResults || [];
+            if (results.length === 0) {
+                alert("No results to export. Please process a batch first.");
+                return;
+            }
+
+            const headers = [
+                "Original Narration", "Expense Group", "Debit Ledger", "Credit Ledger", 
+                "Amount", "Payment Mode", "Confidence", "Standardized Narration"
+            ];
+
+            const csvRows = results.map(r => 
+                [
+                    `"${r.narration.replace(/"/g, '""')}"`, // Handle quotes in narration
+                    r.group,
+                    r.ledger,
+                    r.paymentLedger,
+                    r.amount,
+                    r.paymentMode,
+                    r.confidence,
+                    // Standardized Narration for Export
+                    `"Being ${r.group} of ₹${r.amount.toLocaleString('en-IN')} paid by ${r.paymentMode}. Original Narration: ${r.narration.substring(0, 30)}..."`
+                ].join(',')
+            );
+
+            const csvContent = [headers.join(','), ...csvRows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "Journal_Classification_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Initial counter update for any placeholder text
+        batchNarrationInput.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>
