@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thirunelveli AURA - Student Projects</title>
+    <title>Thirunelveli AURA - Student Projects - 11th October, 2025 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +27,12 @@
             <p class="mt-2 text-lg text-gray-600">A Showcase of Student Web Apps from Vibe Coding</p>
         </header>
 
+        <div class="text-center mb-6">
+            <button id="refresh-button" class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md hover:bg-gray-300 transition-colors text-sm">
+                Clear Cache & Refresh Projects
+            </button>
+        </div>
+
         <main id="project-gallery" class="card-container">
             <!-- Loading message -->
             <div id="loading" class="col-span-full text-center text-gray-500">
@@ -36,7 +42,7 @@
         </main>
 
         <footer class="text-center mt-12 text-gray-500">
-            <p>Curated by CA S. Rathinagiri &copy; 2025</p>
+            <p>Curated by S. Rathinagiri &copy; 2024</p>
         </footer>
     </div>
 
@@ -44,92 +50,136 @@
         // --- GitHub Repository Configuration ---
         const GITHUB_OWNER = 'SRathinaGiri';
         const GITHUB_REPO = 'ThirunelveliAURA';
+        const CACHE_KEY = 'auraProjectsCache';
+        const CACHE_VERSION = 'v2'; // Increment to invalidate old cache
+
+        // --- Function to Render Projects to the DOM ---
+        function renderProjects(projects) {
+            const gallery = document.getElementById('project-gallery');
+            gallery.innerHTML = ''; // Clear existing content
+
+            if (!projects || projects.length === 0) {
+                 gallery.innerHTML = '<p class="col-span-full text-center text-gray-500">No projects found.</p>';
+                 return;
+            }
+            
+            // Sort projects alphabetically by name
+            projects.sort((a, b) => a.name.localeCompare(b.name));
+
+            projects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col';
+                card.innerHTML = `
+                    <div class="p-5 flex-grow">
+                        <h2 class="text-xl font-semibold text-gray-800 capitalize">${project.name}</h2>
+                    </div>
+                    <div class="p-5 bg-gray-50 border-t border-gray-200 grid grid-cols-2 gap-3 text-sm">
+                         <a href="${project.liveUrl}" target="_blank" rel="noopener noreferrer" class="text-center font-medium bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
+                            View App
+                        </a>
+                        <a href="${project.promptUrl}" target="_blank" rel="noopener noreferrer" class="text-center font-medium bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors">
+                            View Prompt
+                        </a>
+                    </div>
+                `;
+                gallery.appendChild(card);
+            });
+        }
 
         // --- Main Function to Fetch and Display Projects ---
         async function loadProjects() {
-            const gallery = document.getElementById('project-gallery');
             const loadingIndicator = document.getElementById('loading');
             
-            const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/`;
+            // Try to load from cache first
+            try {
+                const cachedData = JSON.parse(sessionStorage.getItem(CACHE_KEY));
+                if (cachedData && cachedData.version === CACHE_VERSION && cachedData.projects) {
+                    console.log("Loading projects from cache.");
+                    renderProjects(cachedData.projects);
+                    loadingIndicator.style.display = 'none';
+                    return;
+                }
+            } catch (e) {
+                console.warn("Could not parse cache. Fetching fresh data.");
+                sessionStorage.removeItem(CACHE_KEY);
+            }
+
+
+            console.log("Fetching projects from GitHub API...");
+            // Use the more efficient `trees` API to get all files in one request
+            const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/main?recursive=1`;
             const LIVE_PAGE_BASE_URL = `https://${GITHUB_OWNER}.github.io/${GITHUB_REPO}/`;
+            const GITHUB_BLOB_BASE_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/`;
 
             try {
                 const response = await fetch(GITHUB_API_URL);
                 if (!response.ok) {
                     throw new Error(`GitHub API error: ${response.status}`);
                 }
-                const items = await response.json();
-
-                // Filter for directories only, excluding any git submodules or special files
-                const projectFolders = items.filter(item => item.type === 'dir');
-
-                if (projectFolders.length === 0) {
-                     loadingIndicator.textContent = 'No projects found in the repository.';
-                     return;
+                const data = await response.json();
+                
+                if (!data.tree) {
+                    throw new Error("Invalid API response format.");
                 }
 
-                // Clear loading indicator
-                gallery.innerHTML = '';
-                
-                // Fetch details for each project folder concurrently
-                const projectPromises = projectFolders.map(async (folder) => {
-                    try {
-                        const folderContentsResponse = await fetch(folder.url);
-                        if (!folderContentsResponse.ok) return null;
-                        const folderContents = await folderContentsResponse.json();
-                        
-                        // Find the primary HTML file and the prompt text file
-                        const htmlFile = folderContents.find(file => file.name.endsWith('.html'));
-                        const promptFile = folderContents.find(file => file.name.toLowerCase() === 'prompt.txt');
+                // Process the flat file list into a structured project map
+                const projectsMap = data.tree.reduce((acc, file) => {
+                    const pathParts = file.path.split('/');
+                    if (pathParts.length !== 2) return acc; // Only process files in top-level directories
 
-                        if (htmlFile) {
-                            return {
-                                name: folder.name.replace(/-/g, ' '),
-                                liveUrl: `${LIVE_PAGE_BASE_URL}${folder.name}/${htmlFile.name}`,
-                                promptUrl: promptFile ? promptFile.html_url : folder.html_url,
-                                repoUrl: folder.html_url,
-                            };
-                        }
-                        return null;
-                    } catch (error) {
-                        console.error(`Error fetching contents for ${folder.name}:`, error);
-                        return null;
+                    const folderName = pathParts[0];
+                    const fileName = pathParts[1];
+
+                    if (!acc[folderName]) {
+                        acc[folderName] = { folder: folderName };
                     }
-                });
+                    if (fileName.endsWith('.html')) {
+                        acc[folderName].htmlFile = fileName;
+                    }
+                    if (fileName.toLowerCase() === 'prompt.txt') {
+                        acc[folderName].promptFile = fileName;
+                    }
 
-                const projects = (await Promise.all(projectPromises)).filter(p => p !== null);
-                
-                // Render project cards
-                projects.forEach(project => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col';
-                    card.innerHTML = `
-                        <div class="p-5 flex-grow">
-                            <h2 class="text-xl font-semibold text-gray-800 capitalize">${project.name}</h2>
-                        </div>
-                        <div class="p-5 bg-gray-50 border-t border-gray-200 grid grid-cols-2 gap-3 text-sm">
-                             <a href="${project.liveUrl}" target="_blank" rel="noopener noreferrer" class="text-center font-medium bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
-                                View App
-                            </a>
-                            <a href="${project.promptUrl}" target="_blank" rel="noopener noreferrer" class="text-center font-medium bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors">
-                                View Prompt
-                            </a>
-                        </div>
-                    `;
-                    gallery.appendChild(card);
-                });
+                    return acc;
+                }, {});
 
+                // Convert the map into the final projects array
+                const projects = Object.values(projectsMap)
+                    .filter(p => p.htmlFile) // Only include folders with an HTML file
+                    .map(p => ({
+                        name: p.folder.replace(/-/g, ' '),
+                        liveUrl: `${LIVE_PAGE_BASE_URL}${p.folder}/${p.htmlFile}`,
+                        promptUrl: p.promptFile 
+                            ? `${GITHUB_BLOB_BASE_URL}${p.folder}/${p.promptFile}` 
+                            : `${GITHUB_BLOB_BASE_URL}${p.folder}`,
+                    }));
+
+                // Save to cache with a version number and render
+                const cachePayload = { version: CACHE_VERSION, projects: projects };
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
+                renderProjects(projects);
 
             } catch (error) {
                 console.error('Failed to load projects:', error);
-                loadingIndicator.textContent = 'Failed to load projects. Please check the console for details.';
-                loadingIndicator.classList.add('text-red-500');
+                const gallery = document.getElementById('project-gallery');
+                gallery.innerHTML = `<p class="col-span-full text-center text-red-500 font-medium">
+                    Failed to load projects. This may be due to GitHub's API rate limiting. Please try again in a little while.
+                </p>`;
+            } finally {
+                 loadingIndicator.style.display = 'none';
             }
         }
-
-        // --- Run the script on page load ---
+        
+        // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', loadProjects);
+
+        document.getElementById('refresh-button').addEventListener('click', () => {
+            sessionStorage.removeItem(CACHE_KEY);
+            console.log("Cache cleared. Reloading page.");
+            location.reload();
+        });
     </script>
 
 </body>
 </html>
+
