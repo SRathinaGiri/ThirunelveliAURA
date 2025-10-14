@@ -1,0 +1,243 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Snake Game</title>
+<style>
+  body {
+    margin: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: "Poppins", sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  h1 {
+    margin-top: 10px;
+  }
+
+  #gameCanvas {
+    background: #f0f0f0;
+    border: 2px solid #333;
+    border-radius: 10px;
+  }
+
+  #scoreDisplay {
+    font-size: 1.2em;
+    margin-top: 10px;
+  }
+
+  #pauseBtn {
+    margin-top: 20px;
+    background: #ffb703;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+  }
+
+  #controls {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    margin-top: 25px; /* extra vertical spacing */
+  }
+
+  button {
+    background: #222;
+    color: white;
+    font-size: 1.2em;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    width: 45%;
+  }
+
+  button:active {
+    background: #555;
+  }
+
+  #gameOver {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.95);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  }
+
+  #restartBtn {
+    margin-top: 15px;
+    background: #007bff;
+    color: #fff;
+    font-size: 1.1em;
+    padding: 10px 20px;
+  }
+</style>
+</head>
+<body>
+  <h1>Snake Game by Shiva Subramani</h1>
+  <canvas id="gameCanvas" width="300" height="300"></canvas>
+  <div id="scoreDisplay">Score: 0</div>
+  <button id="pauseBtn">Pause</button>
+
+  <div id="controls">
+    <button id="leftBtn">⟲ Left</button>
+    <button id="rightBtn">Right ⟳</button>
+  </div>
+
+  <div id="gameOver">
+    <h2>Game Over!</h2>
+    <p id="finalScore"></p>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const box = 15;
+let snake, direction, food, score, isPaused, gameInterval;
+
+const scoreDisplay = document.getElementById("scoreDisplay");
+const pauseBtn = document.getElementById("pauseBtn");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+const restartBtn = document.getElementById("restartBtn");
+
+// Initialize game
+function init() {
+  snake = [{x: 150, y: 150}];
+  direction = "RIGHT";
+  score = 0;
+  isPaused = false;
+  food = randomFood();
+  gameOverScreen.style.display = "none";
+  scoreDisplay.textContent = "Score: " + score;
+  pauseBtn.textContent = "Pause";
+  clearInterval(gameInterval);
+  gameInterval = setInterval(draw, 120);
+}
+
+function randomFood() {
+  return {
+    x: Math.floor(Math.random() * (canvas.width / box)) * box,
+    y: Math.floor(Math.random() * (canvas.height / box)) * box
+  };
+}
+
+// Play simple beep sound (no file needed)
+function playEatSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.value = 600;
+  gain.gain.setValueAtTime(0.15, ctx.currentTime);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.15);
+}
+
+// Draw and update snake
+function draw() {
+  if (isPaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw food
+  ctx.fillStyle = "#ff0000";
+  ctx.fillRect(food.x, food.y, box, box);
+
+  // Snake movement
+  let headX = snake[0].x;
+  let headY = snake[0].y;
+
+  if (direction === "LEFT") headX -= box;
+  if (direction === "RIGHT") headX += box;
+  if (direction === "UP") headY -= box;
+  if (direction === "DOWN") headY += box;
+
+  // Wrap around canvas
+  if (headX >= canvas.width) headX = 0;
+  if (headX < 0) headX = canvas.width - box;
+  if (headY >= canvas.height) headY = 0;
+  if (headY < 0) headY = canvas.height - box;
+
+  let newHead = {x: headX, y: headY};
+
+  // Check for food
+  if (headX === food.x && headY === food.y) {
+    score++;
+    playEatSound();
+    food = randomFood();
+  } else {
+    snake.pop();
+  }
+
+  // Check for self-collision
+  for (let seg of snake) {
+    if (seg.x === newHead.x && seg.y === newHead.y) {
+      return gameOver();
+    }
+  }
+
+  snake.unshift(newHead);
+
+  // Draw snake
+  for (let i = 0; i < snake.length; i++) {
+    ctx.fillStyle = i === 0 ? "#2a9d8f" : "#264653";
+    ctx.fillRect(snake[i].x, snake[i].y, box, box);
+  }
+
+  scoreDisplay.textContent = "Score: " + score;
+}
+
+// Game over
+function gameOver() {
+  clearInterval(gameInterval);
+  gameOverScreen.style.display = "flex";
+  finalScore.textContent = "Final Score: " + score;
+}
+
+// Pause/Resume
+pauseBtn.onclick = () => {
+  isPaused = !isPaused;
+  pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+};
+
+// Restart manually
+restartBtn.onclick = () => {
+  gameOverScreen.style.display = "none";
+  init();
+};
+
+// Turning functions — rotate direction
+function turnLeft() {
+  const dirs = ["UP", "LEFT", "DOWN", "RIGHT"];
+  direction = dirs[(dirs.indexOf(direction) + 1) % 4];
+}
+
+function turnRight() {
+  const dirs = ["UP", "RIGHT", "DOWN", "LEFT"];
+  direction = dirs[(dirs.indexOf(direction) + 1) % 4];
+}
+
+document.getElementById("leftBtn").onclick = turnLeft;
+document.getElementById("rightBtn").onclick = turnRight;
+
+// Start the game
+init();
+</script>
+</body>
+</html>
