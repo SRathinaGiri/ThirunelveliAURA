@@ -1,0 +1,2 @@
+Project Summary:
+My project is a web app that automates accounting by analyzing raw bank text (narrations). It uses Regex to accurately extract amounts (handling formats like Rs. 5,000 and 5 Lakh) and instantly classifies the transaction into a standardized journal entry (Debit/Credit).
