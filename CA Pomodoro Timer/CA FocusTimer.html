@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CA Pomodoro</title>
+  <!-- Tailwind Play CDN (works for prototypes) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + ReactDOM (development builds) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel to compile JSX in-browser (for quick prototyping) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Small helper for tabular numbers */
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    /* Make scrollbar less intrusive for the demo */
+    .max-h-96::-webkit-scrollbar { height: 8px; width: 8px; }
+    .max-h-96::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 8px; }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  const CA_SUBJECTS = ['Audit', 'Tax', 'Financial Reporting', 'Strategic Management', 'Advanced Management Accounting', 'IDT', 'Corporate Law', 'Other'];
+
+  function Icon({ name, size = 18 }) {
+    // Simple emoji replacements for lucide icons so the single-file app runs anywhere.
+    const map = {
+      Play: '▶️',
+      Pause: '⏸️',
+      RotateCcw: '↺',
+      Settings: '⚙️',
+      Plus: '➕',
+      Trash2: '🗑️',
+      Moon: '🌙',
+      Sun: '☀️',
+      Volume2: '🔊',
+      VolumeX: '🔈',
+      Download: '⤓'
+    };
+    const text = map[name] || '•';
+    return <span style={{fontSize: size, lineHeight: 1}} aria-hidden>{text}</span>;
+  }
+
+  const PomodoroApp = () => {
+    const [mode, setMode] = useState('work');
+    const [timeLeft, setTimeLeft] = useState(25 * 60);
+    const [isRunning, setIsRunning] = useState(false);
+    const [cycleCount, setCycleCount] = useState(0);
+    const [currentTaskId, setCurrentTaskId] = useState(null);
+    const [sessionStartTime, setSessionStartTime] = useState(null);
+
+    const [workDuration, setWorkDuration] = useState(25);
+    const [shortBreakDuration, setShortBreakDuration] = useState(5);
+    const [longBreakDuration, setLongBreakDuration] = useState(20);
+    const [cyclesBeforeLongBreak, setCyclesBeforeLongBreak] = useState(4);
+    const [darkMode, setDarkMode] = useState(false);
+    const [soundEnabled, setSoundEnabled] = useState(true);
+
+    const [tasks, setTasks] = useState([]);
+    const [sessions, setSessions] = useState([]);
+    const [studyPlan, setStudyPlan] = useState(null);
+
+    const [activeView, setActiveView] = useState('timer');
+    const [showSettings, setShowSettings] = useState(false);
+    const [showTaskForm, setShowTaskForm] = useState(false);
+
+    const [newTask, setNewTask] = useState({
+      title: '',
+      subject: CA_SUBJECTS[0],
+      estimatedPomodoros: 1,
+      priority: 'medium',
+      notes: ''
+    });
+
+    const [examDate, setExamDate] = useState('');
+    const intervalRef = useRef(null);
+
+    useEffect(() => {
+      try {
+        const savedTasks = localStorage.getItem('ca_tasks');
+        const savedSessions = localStorage.getItem('ca_sessions');
+        const savedSettings = localStorage.getItem('ca_settings');
+        const savedDarkMode = localStorage.getItem('ca_darkMode');
+
+        if (savedTasks) setTasks(JSON.parse(savedTasks));
+        if (savedSessions) setSessions(JSON.parse(savedSessions));
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings);
+          setWorkDuration(settings.workDuration || 25);
+          setShortBreakDuration(settings.shortBreakDuration || 5);
+          setLongBreakDuration(settings.longBreakDuration || 20);
+          setCyclesBeforeLongBreak(settings.cyclesBeforeLongBreak || 4);
+          setSoundEnabled(typeof settings.soundEnabled === 'boolean' ? settings.soundEnabled : true);
+        }
+        if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
+
+        if (!savedTasks) {
+          const demoTasks = [
+            {
+              id: '1',
+              title: 'Audit Standards Chapter 1-3',
+              subject: 'Audit',
+              estimatedPomodoros: 6,
+              completedPomodoros: 2,
+              priority: 'high',
+              tags: ['theory', 'revision'],
+              notes: 'Focus on SA 200, 210, 220',
+              createdAt: Date.now()
+            },
+            {
+              id: '2',
+              title: 'Direct Tax Practice Problems',
+              subject: 'Tax',
+              estimatedPomodoros: 8,
+              completedPomodoros: 0,
+              priority: 'high',
+              tags: ['practice', 'numerical'],
+              notes: 'Complete Module 2 questions',
+              createdAt: Date.now()
+            }
+          ];
+          setTasks(demoTasks);
+          localStorage.setItem('ca_tasks', JSON.stringify(demoTasks));
+        }
+      } catch (e) {
+        console.error('Error loading data:', e);
+      }
+    }, []);
+
+    useEffect(() => {
+      // drift-prone simple interval (ok for prototype); can upgrade later.
+      if (isRunning && timeLeft > 0) {
+        intervalRef.current = window.setInterval(() => {
+          setTimeLeft(t => t - 1);
+        }, 1000);
+      } else if (timeLeft === 0) {
+        handleTimerComplete();
+      }
+      return () => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      };
+    }, [isRunning, timeLeft]);
+
+    useEffect(() => {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      document.title = `${minutes}:${seconds.toString().padStart(2, '0')} - CA Pomodoro`;
+    }, [timeLeft]);
+
+    useEffect(() => {
+      localStorage.setItem('ca_darkMode', JSON.stringify(darkMode));
+    }, [darkMode]);
+
+    const handleTimerComplete = () => {
+      setIsRunning(false);
+      if (soundEnabled) playSound();
+      
+      if (mode === 'work' && currentTaskId) {
+        logSession();
+        const newCycle = cycleCount + 1;
+        setCycleCount(newCycle);
+        
+        setTasks(prev => {
+          const updated = prev.map(t => 
+            t.id === currentTaskId 
+              ? { ...t, completedPomodoros: (t.completedPomodoros || 0) + 1 }
+              : t
+          );
+          localStorage.setItem('ca_tasks', JSON.stringify(updated));
+          return updated;
+        });
+
+        if (newCycle % cyclesBeforeLongBreak === 0) {
+          setMode('longBreak');
+          setTimeLeft(longBreakDuration * 60);
+        } else {
+          setMode('shortBreak');
+          setTimeLeft(shortBreakDuration * 60);
+        }
+      } else {
+        setMode('work');
+        setTimeLeft(workDuration * 60);
+      }
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Pomodoro Timer', {
+          body: mode === 'work' ? 'Work session complete! Take a break.' : 'Break over! Ready to focus?',
+          icon: '🍅'
+        });
+      }
+    };
+
+    const playSound = () => {
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE=');
+        audio.play().catch(() => {});
+      } catch (e) {
+        console.error('Error playing sound:', e);
+      }
+    };
+
+    const logSession = () => {
+      if (!currentTaskId || !sessionStartTime) return;
+      
+      const task = tasks.find(t => t.id === currentTaskId);
+      if (!task) return;
+
+      const session = {
+        id: Date.now().toString(),
+        taskId: currentTaskId,
+        taskTitle: task.title,
+        subject: task.subject,
+        startTime: sessionStartTime,
+        endTime: Date.now(),
+        durationMinutes: workDuration
+      };
+
+      const newSessions = [...sessions, session];
+      setSessions(newSessions);
+      localStorage.setItem('ca_sessions', JSON.stringify(newSessions));
+      setSessionStartTime(null);
+    };
+
+    const startTimer = () => {
+      setIsRunning(true);
+      if (mode === 'work' && !sessionStartTime) {
+        setSessionStartTime(Date.now());
+      }
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    };
+
+    const pauseTimer = () => {
+      setIsRunning(false);
+    };
+
+    const resetTimer = () => {
+      setIsRunning(false);
+      setSessionStartTime(null);
+      if (mode === 'work') setTimeLeft(workDuration * 60);
+      else if (mode === 'shortBreak') setTimeLeft(shortBreakDuration * 60);
+      else setTimeLeft(longBreakDuration * 60);
+    };
+
+    const addTask = () => {
+      if (!newTask.title.trim()) return;
+      
+      const task = {
+        id: Date.now().toString(),
+        title: newTask.title,
+        subject: newTask.subject,
+        estimatedPomodoros: newTask.estimatedPomodoros,
+        completedPomodoros: 0,
+        priority: newTask.priority,
+        tags: [],
+        notes: newTask.notes,
+        createdAt: Date.now()
+      };
+      const updatedTasks = [...tasks, task];
+      setTasks(updatedTasks);
+      localStorage.setItem('ca_tasks', JSON.stringify(updatedTasks));
+      setNewTask({ title: '', subject: CA_SUBJECTS[0], estimatedPomodoros: 1, priority: 'medium', notes: '' });
+      setShowTaskForm(false);
+    };
+
+    const deleteTask = (id) => {
+      const updatedTasks = tasks.filter(t => t.id !== id);
+      setTasks(updatedTasks);
+      localStorage.setItem('ca_tasks', JSON.stringify(updatedTasks));
+      if (currentTaskId === id) setCurrentTaskId(null);
+    };
+
+    const startTaskTimer = (taskId) => {
+      setCurrentTaskId(taskId);
+      setMode('work');
+      setTimeLeft(workDuration * 60);
+      setIsRunning(false);
+      setSessionStartTime(null);
+    };
+
+    const generateStudyPlan = () => {
+      if (!examDate) return;
+      
+      const exam = new Date(examDate).getTime();
+      const today = Date.now();
+      const daysAvailable = Math.max(1, Math.floor((exam - today) / (1000 * 60 * 60 * 24)));
+      const tasksToSchedule = tasks.filter(t => (t.completedPomodoros || 0) < (t.estimatedPomodoros || 0));
+      const totalPomodoros = tasksToSchedule.reduce((sum, t) => sum + ((t.estimatedPomodoros || 0) - (t.completedPomodoros || 0)), 0);
+      const pomodorosPerDay = Math.ceil(totalPomodoros / daysAvailable) || 1;
+
+      const schedule = [];
+      let taskIndex = 0;
+      let taskPomodoros = 0;
+
+      for (let day = 0; day < daysAvailable; day++) {
+        const dayDate = today + day * 24 * 60 * 60 * 1000;
+        const dayTasks = [];
+        let dayPomodoros = 0;
+
+        while (dayPomodoros < pomodorosPerDay && taskIndex < tasksToSchedule.length) {
+          const task = tasksToSchedule[taskIndex];
+          const remaining = (task.estimatedPomodoros || 0) - (task.completedPomodoros || 0) - taskPomodoros;
+          
+          if (remaining > 0) {
+            dayTasks.push({ id: task.id, title: task.title });
+            dayPomodoros++;
+            taskPomodoros++;
+            
+            if (taskPomodoros >= remaining) {
+              taskIndex++;
+              taskPomodoros = 0;
+            }
+          } else {
+            taskIndex++;
+            taskPomodoros = 0;
+          }
+        }
+
+        schedule.push({ date: dayDate, tasks: dayTasks, pomodoros: dayPomodoros });
+      }
+
+      setStudyPlan({ examDate: exam, dailySchedule: schedule });
+    };
+
+    const exportCSV = () => {
+      const headers = ['session_id', 'task_id', 'task_title', 'subject', 'start_time', 'end_time', 'duration_minutes'];
+      const rows = sessions.map(s => [
+        s.id,
+        s.taskId,
+        s.taskTitle,
+        s.subject,
+        new Date(s.startTime).toISOString(),
+        new Date(s.endTime).toISOString(),
+        s.durationMinutes
+      ]);
+      const csv = [headers, ...rows].map(row => row.join(',')).join('\\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pomodoro_sessions_${Date.now()}.csv`;
+      a.click();
+    };
+
+    const downloadStudyPlan = () => {
+      if (!studyPlan) return;
+      const headers = ['date', 'task_titles', 'pomodoros'];
+      const rows = studyPlan.dailySchedule.map(d => [
+        new Date(d.date).toISOString().split('T')[0],
+        d.tasks.map(t => t.title).join(' | '),
+        d.pomodoros
+      ]);
+      const csv = [headers, ...rows].map(r => r.join(',')).join('\\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `study_plan_${Date.now()}.csv`;
+      a.click();
+    };
+
+    const totalPomodoros = sessions.length;
+    const totalMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+    const subjectBreakdown = sessions.reduce((acc, s) => {
+      acc[s.subject] = (acc[s.subject] || 0) + s.durationMinutes;
+      return acc;
+    }, {});
+
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const currentTask = tasks.find(t => t.id === currentTaskId);
+
+    // Save settings to localStorage
+    const saveSettings = () => {
+      const settings = { workDuration, shortBreakDuration, longBreakDuration, cyclesBeforeLongBreak, soundEnabled };
+      localStorage.setItem('ca_settings', JSON.stringify(settings));
+      setShowSettings(false);
+    };
+
+    const clearAllData = () => {
+      if (!window.confirm('Clear all tasks and sessions? This cannot be undone.')) return;
+      setTasks([]);
+      setSessions([]);
+      localStorage.removeItem('ca_tasks');
+      localStorage.removeItem('ca_sessions');
+    };
+
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900'}`}>
+        <header className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md px-4 py-4`}>
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-indigo-600">🍅 CA Pomodoro</h1>
+            <div className="flex gap-2">
+              <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
+                {darkMode ? <Icon name="Sun" /> : <Icon name="Moon" />}
+              </button>
+              <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
+                {soundEnabled ? <Icon name="Volume2" /> : <Icon name="VolumeX" />}
+              </button>
+              <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}>
+                <Icon name="Settings" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <nav className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex gap-2 flex-wrap">
+            {['timer', 'analytics', 'planner'].map(view => (
+              <button
+                key={view}
+                onClick={() => setActiveView(view)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activeView === view
+                    ? 'bg-indigo-600 text-white'
+                    : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'
+                }`}
+              >
+                {view === 'timer' && 'Focus Timer'}
+                {view === 'analytics' && 'Analytics'}
+                {view === 'planner' && 'Study Planner'}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          {activeView === 'timer' && (
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Tasks</h2>
+                  <button onClick={() => setShowTaskForm(!showTaskForm)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    <Icon name="Plus" />
+                  </button>
+                </div>
+
+                {showTaskForm && (
+                  <div className="mb-4 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Task title"
+                      value={newTask.title}
+                      onChange={e => setNewTask({ ...newTask, title: e.target.value })}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                    <select
+                      value={newTask.subject}
+                      onChange={e => setNewTask({ ...newTask, subject: e.target.value })}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    >
+                      {CA_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Est. Pomodoros"
+                      value={newTask.estimatedPomodoros}
+                      onChange={e => setNewTask({ ...newTask, estimatedPomodoros: parseInt(e.target.value) || 1 })}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                    <button onClick={addTask} disabled={!newTask.title} className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                      Add Task
+                    </button>
+                  </div>
+                )}
+
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {tasks.map(task => (
+                    <div
+                      key={task.id}
+                      className={`p-3 rounded-lg border-2 ${
+                        currentTaskId === task.id
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                          : darkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{task.title}</h3>
+                          <p className="text-sm opacity-70">{task.subject}</p>
+                          <p className="text-sm">
+                            {task.completedPomodoros}/{task.estimatedPomodoros} 🍅
+                          </p>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => startTaskTimer(task.id)}
+                            className="p-2 bg-green-600 text-white rounded hover:bg-green-700"
+                          >
+                            <Icon name="Play" />
+                          </button>
+                          <button
+                            onClick={() => deleteTask(task.id)}
+                            className="p-2 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            <Icon name="Trash2" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-8 flex flex-col items-center justify-center`}>
+                <div className="w-full">
+                  <div className="flex gap-2 mb-6 flex-wrap justify-center">
+                    {[
+                      { mode: 'work', label: 'Focus' },
+                      { mode: 'shortBreak', label: 'Short Break' },
+                      { mode: 'longBreak', label: 'Long Break' }
+                    ].map(({ mode: m, label }) => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          setMode(m);
+                          setIsRunning(false);
+                          if (m === 'work') setTimeLeft(workDuration * 60);
+                          else if (m === 'shortBreak') setTimeLeft(shortBreakDuration * 60);
+                          else setTimeLeft(longBreakDuration * 60);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                          mode === m
+                            ? 'bg-indigo-600 text-white'
+                            : darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="text-6xl md:text-7xl font-bold text-center mb-6 tabular-nums">
+                    {formatTime(timeLeft)}
+                  </div>
+
+                  {currentTask && mode === 'work' && (
+                    <div className="text-center mb-4">
+                      <p className="text-sm opacity-70">Current Task</p>
+                      <p className="font-semibold">{currentTask.title}</p>
+                      <p className="text-sm opacity-70">{currentTask.subject}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 justify-center">
+                    {!isRunning ? (
+                      <button
+                        onClick={startTimer}
+                        className="px-8 py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 flex items-center gap-2"
+                      >
+                        <Icon name="Play" size={22} /> Start
+                      </button>
+                    ) : (
+                      <button
+                        onClick={pauseTimer}
+                        className="px-8 py-4 bg-yellow-600 text-white rounded-xl font-bold text-lg hover:bg-yellow-700 flex items-center gap-2"
+                      >
+                        <Icon name="Pause" size={22} /> Pause
+                      </button>
+                    )}
+                    <button
+                      onClick={resetTimer}
+                      className="px-6 py-4 bg-gray-600 text-white rounded-xl hover:bg-gray-700"
+                    >
+                      <Icon name="RotateCcw" size={20} />
+                    </button>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm opacity-70">Cycle: {cycleCount} / {cyclesBeforeLongBreak}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h2 className="text-xl font-bold mb-4">Today's Progress</h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm opacity-70">Pomodoros Completed</p>
+                    <p className="text-3xl font-bold text-indigo-600">{totalPomodoros}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm opacity-70">Total Focus Time</p>
+                    <p className="text-2xl font-bold">{Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</p>
+                  </div>
+                  {Object.keys(subjectBreakdown).length > 0 && (
+                    <div>
+                      <p className="text-sm opacity-70 mb-2">Subject Breakdown</p>
+                      {Object.entries(subjectBreakdown).map(([subject, minutes]) => (
+                        <div key={subject} className="flex justify-between items-center mb-1">
+                          <span className="text-sm">{subject}</span>
+                          <span className="text-sm font-semibold">{Math.floor(minutes / 60)}h {minutes % 60}m</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeView === 'analytics' && (
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+                <h2 className="text-2xl font-bold">Study Analytics</h2>
+                <button onClick={exportCSV} disabled={sessions.length === 0} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+                  <Icon name="Download" /> Export CSV
+                </button>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="text-center p-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                  <p className="text-sm opacity-90">Total Pomodoros</p>
+                  <p className="text-4xl font-bold">{totalPomodoros}</p>
+                </div>
+                <div className="text-center p-6 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 text-white">
+                  <p className="text-sm opacity-90">Total Hours</p>
+                  <p className="text-4xl font-bold">{(totalMinutes / 60).toFixed(1)}</p>
+                </div>
+                <div className="text-center p-6 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 text-white">
+                  <p className="text-sm opacity-90">Sessions</p>
+                  <p className="text-4xl font-bold">{sessions.length}</p>
+                </div>
+              </div>
+
+              {Object.keys(subjectBreakdown).length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-4">Subject-wise Time Distribution</h3>
+                  <div className="space-y-3">
+                    {Object.entries(subjectBreakdown).map(([subject, minutes]) => {
+                      const percentage = (minutes / totalMinutes) * 100;
+                      return (
+                        <div key={subject}>
+                          <div className="flex justify-between mb-1">
+                            <span>{subject}</span>
+                            <span className="font-semibold">{Math.floor(minutes / 60)}h {minutes % 60}m ({percentage.toFixed(1)}%)</span>
+                          </div>
+                          <div className={`w-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-3`}>
+                            <div className="bg-indigo-600 h-3 rounded-full transition-all" style={{ width: `${percentage}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {sessions.length > 0 && (
+                <div>
+                  <h3 className="text-xl font-bold mb-4">Recent Sessions</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <tr>
+                          <th className="px-4 py-2 text-left">Task</th>
+                          <th className="px-4 py-2 text-left">Subject</th>
+                          <th className="px-4 py-2 text-left">Date</th>
+                          <th className="px-4 py-2 text-left">Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sessions.slice(-10).reverse().map(session => (
+                          <tr key={session.id} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <td className="px-4 py-2">{session.taskTitle}</td>
+                            <td className="px-4 py-2">{session.subject}</td>
+                            <td className="px-4 py-2">{new Date(session.startTime).toLocaleDateString()}</td>
+                            <td className="px-4 py-2">{session.durationMinutes}m</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {sessions.length === 0 && (
+                <div className="text-center py-12 opacity-70">
+                  <p>No study sessions yet. Complete a pomodoro to see your analytics!</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeView === 'planner' && (
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+              <h2 className="text-2xl font-bold mb-6">Study Planner</h2>
+
+              <div className="mb-6 grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Exam Date</label>
+                  <input
+                    type="date"
+                    value={examDate}
+                    onChange={e => setExamDate(e.target.value)}
+                    className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={generateStudyPlan}
+                disabled={!examDate || tasks.length === 0}
+                className={`px-4 py-2 rounded-lg text-white ${(!examDate || tasks.length === 0) ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                Auto-generate Plan
+              </button>
+
+              <div className="mt-6">
+                {!studyPlan && (
+                  <p className="opacity-70">No study plan generated yet. Set your exam date and click "Auto-generate Plan".</p>
+                )}
+
+                {studyPlan && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm opacity-70">Exam Date</p>
+                        <p className="font-semibold">{new Date(studyPlan.examDate).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={downloadStudyPlan} className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
+                          <Icon name="Download" /> Export CSV
+                        </button>
+                        <button onClick={() => setStudyPlan(null)} className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Clear</button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto border rounded-lg p-4">
+                      {studyPlan.dailySchedule.map((day, idx) => (
+                        <div key={idx} className="mb-3 p-2 rounded hover:bg-gray-50">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm opacity-70">{new Date(day.date).toLocaleDateString()}</p>
+                              <p className="font-semibold">{day.pomodoros} Pomodoro{day.pomodoros !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="text-sm opacity-80">
+                              {day.tasks.length} task{day.tasks.length !== 1 ? 's' : ''} 
+                            </div>
+                          </div>
+                          <div className="mt-2 text-sm opacity-80">
+                            {day.tasks.length > 0 ? day.tasks.map((t, i) => (
+                              <div key={i}>• {t.title}</div>
+                            )) : (<div className="italic opacity-60">No tasks assigned</div>)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6">
+                <button onClick={clearAllData} className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700">Clear All Tasks & Sessions</button>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Modal */}
+          {showSettings && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+              <div className={`w-full max-w-2xl rounded-lg p-6 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold">Settings</h3>
+                  <button onClick={() => setShowSettings(false)} className="px-3 py-1 rounded bg-gray-200 text-sm">Close</button>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Work Duration (minutes)</label>
+                    <input type="number" min="5" value={workDuration} onChange={e => setWorkDuration(parseInt(e.target.value) || 5)} className="w-full px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Short Break (minutes)</label>
+                    <input type="number" min="1" value={shortBreakDuration} onChange={e => setShortBreakDuration(parseInt(e.target.value) || 5)} className="w-full px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Long Break (minutes)</label>
+                    <input type="number" min="5" value={longBreakDuration} onChange={e => setLongBreakDuration(parseInt(e.target.value) || 10)} className="w-full px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cycles Before Long Break</label>
+                    <input type="number" min="1" value={cyclesBeforeLongBreak} onChange={e => setCyclesBeforeLongBreak(parseInt(e.target.value) || 4)} className="w-full px-3 py-2 rounded-lg border" />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-3">
+                      <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} />
+                      <span className="text-sm">Play sound on session end</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2">
+                  <button onClick={() => setShowSettings(false)} className="px-4 py-2 rounded bg-gray-300">Cancel</button>
+                  <button onClick={saveSettings} className="px-4 py-2 rounded bg-indigo-600 text-white">Save</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+    );
+  };
+
+  // Render to #root
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<PomodoroApp />);
+
+  </script>
+</body>
+</html>
