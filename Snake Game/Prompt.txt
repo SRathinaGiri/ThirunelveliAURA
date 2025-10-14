@@ -1,1 +1,5 @@
-Snake gamr prompt.
+Give me a html code for creating a basic snake game which can be playable on mobile phone. This game should have only two buttons for turning the snake, one at left side and second at right side below the game window. It should also have a small pause button, Restart button on game over screen and should also show live score while playing. Snake should not die by touching the canvas boundary. Play a sound effect when snake eats the food. (Play sound effect without any .mp3 file requirement)
+
+I am unable to turn snake to up and down, so if I click on right button multiple times it should turn the snake accordingly
+
+Add some space between buttons vertical space between the buttons and modify the game over logic so that the game doesn't start automatically after clicking "ok" in the alert
