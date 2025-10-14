@@ -1,0 +1,1 @@
+Create a web app using only one file or using all in one file(html+js+css) we have to get a one stop digital operating system connecting farmers,buyers and logistics in one integrated platform.
