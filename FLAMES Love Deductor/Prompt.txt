@@ -1,0 +1,1 @@
+Create a app for getting flames of two names with animation of heart effect when showing the result with try again button with glowing result text
