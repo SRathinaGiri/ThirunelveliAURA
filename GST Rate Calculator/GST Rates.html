@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GST Rates — AY 2025-26 (single file)</title>
+<style>
+  :root{--bg:#f6f8fb;--card:#fff;--accent:#0b63d6}
+  body{font-family:Inter,Segoe UI,Arial; margin:16px; background:var(--bg); color:#111}
+  .container{max-width:1100px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  h1{font-size:20px;margin:0}
+  p.lead{margin:0;color:#333}
+  .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(12,20,40,0.06);margin-bottom:12px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input[type="text"]{padding:10px;border-radius:8px;border:1px solid #e2e8f0;flex:1;min-width:180px}
+  button{padding:9px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+  button.secondary{background:#334155}
+  .sample-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left;font-size:14px}
+  th{background:#fafcff;position:sticky;top:0}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#063a7a;font-weight:600;font-size:12px}
+  .small{font-size:13px;color:#475569}
+  .actions{display:flex;gap:8px;align-items:center}
+  .file-inp{display:none}
+  .footer-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+  pre{background:#0b1220;color:#e6f0ff;padding:8px;border-radius:8px;overflow:auto}
+  .note{font-size:13px;color:#0f172a}
+  @media (max-width:720px){header{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>GST Rates — AY 2025-26 By Sharan Subbiah</h1>
+      <p class="lead small">Search item-level GST rates. Upload the official CBIC/GST Council CSV/JSON for the full list (recommended).</p>
+    </div>
+    <div style="margin-left:auto" class="small">
+      <span class="badge">Effective: 22 Sep 2025</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <input id="q" type="text" placeholder="Search by HSN / SAC code or description (e.g., 'gold', 'automobile', '2106')" />
+      <button id="searchBtn">Search</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+      <div style="margin-left:auto" class="actions">
+        <label style="cursor:pointer">
+          <input id="fileIn" class="file-inp" type="file" accept=".csv,.json,.xlsx" />
+          <button id="uploadBtn" class="secondary">Upload official file</button>
+        </label>
+        <button id="exportCsv">Export results CSV</button>
+      </div>
+    </div>
+
+    <div class="sample-meta">
+      <div class="small">Preloaded: common examples only (use upload for full list)</div>
+      <div class="small">Sources: <a href="#" id="srcCbic">CBIC rates page</a>, <a href="#" id="srcPib">Govt PIB note</a></div>
+    </div>
+  </div>
+
+  <div id="resultsCard" class="card">
+    <div style="display:flex;align-items:center;gap:12px">
+      <strong>Results</strong>
+      <div id="resultCount" class="small">0 items</div>
+      <div style="margin-left:auto" class="small">Click a row to copy rate</div>
+    </div>
+
+    <div style="overflow:auto;max-height:520px;margin-top:8px">
+      <table id="resultsTable" aria-live="polite">
+        <thead>
+          <tr><th style="width:120px">HSN / SAC</th><th>Description</th><th style="width:110px">GST Rate</th><th style="width:140px">Notes</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:10px" class="note">
+      Tip: download the CBIC/GST Council Ready Reckoner (or consolidated notification) and upload it here for the authoritative, comprehensive item-level list for AY 2025-26. This page includes links to official sources.
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>About these rates</strong>
+    <p class="small">The GST Council approved a major rate rationalization effective <b>22 Sep 2025</b>. That change consolidated many items and introduced revised slabs; the official CBIC Ready Reckoner and consolidated notifications are the authoritative sources — upload them to this app for a complete dataset. See links below. :contentReference[oaicite:2]{index=2}</p>
+
+    <div class="footer-links">
+      <a id="linkCbic" href="#" target="_blank">CBIC — Goods & Services Rates (official)</a>
+      <a id="linkGstCouncil" href="#" target="_blank">GST Council — Ready Reckoner / Rates</a>
+      <a id="linkPib" href="#" target="_blank">Government PIB note on changes (explainers)</a>
+      <a id="linkNews" href="#" target="_blank">Recent coverage (for summary context)</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Single-file GST Rates viewer:
+  - Preloaded sample dataset (small) for immediate search
+  - Upload official CSV/JSON/Excel to replace dataset
+  - Search & export features
+  - Sources are linked below (official CBIC/GST Council/PIB)
+*/
+
+// ---------- sources (for user) ----------
+const sources = {
+  cbic: "https://cbic-gst.gov.in/gst-goods-services-rates.html",
+  gstCouncil: "https://www.gstcouncil.gov.in/gst-rates-services",
+  pib: "https://static.pib.gov.in/WriteReadData/specificdocs/some-doc.pdf",
+  summaryNews: "https://economictimes.indiatimes.com"
+};
+
+// wire up links
+document.getElementById('srcCbic').href = sources.cbic;
+document.getElementById('linkCbic').href = sources.cbic;
+document.getElementById('linkGstCouncil').href = sources.gstCouncil;
+document.getElementById('linkPib').href = sources.pib;
+document.getElementById('linkNews').href = sources.summaryNews;
+
+// ---------- a small sample dataset (replace by upload for full list) ----------
+let dataset = [
+  {hsn:"7108", desc:"Gold (plain, jewellery) - articles of gold", rate:"3%", notes:"Precious metals table" },
+  {hsn:"7113", desc:"Silver and articles thereof", rate:"3%", notes:"Precious metals" },
+  {hsn:"9801", desc:"Food items - wheat, rice (example of 0% categories vary)", rate:"0%", notes:"Essential food items often 0%" },
+  {hsn:"2106", desc:"Food preparations - ready mixes, processed foods", rate:"5%", notes:"Many packaged foods moved to 5% under 22 Sep 2025 rationalisation" },
+  {hsn:"8703", desc:"Automobiles (small cars) - example", rate:"18%", notes:"Luxury autos / certain cars reclassified" },
+  {hsn:"2403", desc:"Tobacco (cigarettes etc.)", rate:"40% (or 28% + cess historically)", notes:"Sin goods retained higher rate / cess exceptions" },
+  {hsn:"3004", desc:"Medicaments (pharmaceuticals) - formulations", rate:"5%", notes:"Medicines often in concessional slab" },
+  {hsn:"6403", desc:"Footwear (example)", rate:"18%", notes:"Many consumer goods moved to 18% or 5% depending on type" }
+];
+
+// ---------- render / utility ----------
+const tbody = document.getElementById('tbody');
+const qInput = document.getElementById('q');
+const resultCount = document.getElementById('resultCount');
+
+function renderRows(list){
+  tbody.innerHTML = "";
+  if(!list || list.length===0){
+    tbody.innerHTML = '<tr><td colspan="4" class="small">No results. Try another search or upload the official CBIC/GST Ready Reckoner CSV/JSON.</td></tr>';
+    resultCount.textContent = "0 items";
+    return;
+  }
+  resultCount.textContent = list.length + (list.length===1? " item":" items");
+  list.forEach((r, idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(r.hsn||"")}</td>
+      <td>${escapeHtml(r.desc||"")}</td>
+      <td>${escapeHtml(r.rate||"")}</td>
+      <td>${escapeHtml(r.notes||"")}</td>
+    `;
+    tr.addEventListener('click', ()=> {
+      const text = `${r.hsn}\t${r.desc}\t${r.rate}`;
+      navigator.clipboard?.writeText(text).then(()=> {
+        flashRow(tr, "Copied: " + r.rate);
+      }).catch(()=>{ flashRow(tr, "Copied"); });
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(s){
+  if(!s) return "";
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
+function flashRow(tr, msg){
+  const orig = tr.style.background;
+  tr.style.background = "#e6f2ff";
+  setTimeout(()=> tr.style.background = orig, 700);
+  // tiny toast
+  const prev = document.getElementById('tinyToast');
+  if(prev) prev.remove();
+  const div = document.createElement('div'); div.id='tinyToast';
+  div.style.position='fixed'; div.style.right='18px'; div.style.bottom='18px';
+  div.style.background='#0b63d6'; div.style.color='#fff'; div.style.padding='8px 12px'; div.style.borderRadius='10px';
+  div.style.boxShadow='0 8px 20px rgba(2,6,23,0.2)'; div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(()=> div.remove(),1500);
+}
+
+// initial render
+renderRows(dataset);
+
+// ---------- searching ----------
+function searchDataset(q){
+  if(!q || q.trim()==="") return dataset;
+  q = q.trim().toLowerCase();
+  // if q looks numeric (HSN code), match starting or exact
+  const numeric = /^\d+$/.test(q);
+  return dataset.filter(item=>{
+    if(numeric){
+      if(item.hsn && item.hsn.toLowerCase().startsWith(q)) return true;
+    }
+    if(item.desc && item.desc.toLowerCase().includes(q)) return true;
+    if(item.rate && item.rate.toLowerCase().includes(q)) return true;
+    return false;
+  });
+}
+
+document.getElementById('searchBtn').addEventListener('click', ()=>{
+  const q = qInput.value;
+  const res = searchDataset(q);
+  renderRows(res);
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  qInput.value = "";
+  renderRows(dataset);
+});
+qInput.addEventListener('keypress', (e)=>{ if(e.key === 'Enter') document.getElementById('searchBtn').click(); });
+
+// ---------- export CSV ----------
+function toCSV(rows){
+  const header = ['HSN/SAC','Description','GST Rate','Notes'];
+  const lines = [header.join(',')];
+  rows.forEach(r=>{
+    const row = [r.hsn||'', r.desc||'', r.rate||'', r.notes||''];
+    // escape quotes
+    lines.push(row.map(v=>'\"'+String(v).replaceAll('"','""')+'\"').join(','));
+  });
+  return lines.join('\n');
+}
+document.getElementById('exportCsv').addEventListener('click', ()=>{
+  // export current table
+  const rows = Array.from(tbody.querySelectorAll('tr')).map(tr=>{
+    const tds = tr.querySelectorAll('td');
+    if(tds.length<4) return null;
+    return {hsn:tds[0].textContent, desc:tds[1].textContent, rate:tds[2].textContent, notes:tds[3].textContent};
+  }).filter(Boolean);
+  if(rows.length===0){ alert('No rows to export'); return; }
+  const csv = toCSV(rows);
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'gst-results.csv'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+});
+
+// ---------- file upload (CSV / JSON). For Excel (.xlsx) we will try to parse minimal via a basic XLSX reader (client-side not included) - but we will support CSV & JSON reliably. ----------
+const fileIn = document.getElementById('fileIn');
+document.getElementById('uploadBtn').addEventListener('click', ()=> fileIn.click());
+
+fileIn.addEventListener('change', async (ev)=>{
+  const f = ev.target.files?.[0];
+  if(!f) return;
+  const name = f.name.toLowerCase();
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      if(name.endsWith('.json')){
+        const parsed = JSON.parse(e.target.result);
+        // expect array of objects with keys hsn, desc, rate
+        const arr = normalizeUploadedArray(parsed);
+        if(arr && arr.length){ dataset = arr; renderRows(dataset); flashRow(document.querySelector('tr'), 'Loaded JSON'); }
+        else alert('No usable items found in JSON. Expect array of objects with fields like HSN, Description, Rate.');
+      } else if(name.endsWith('.csv') || name.endsWith('.txt')) {
+        const csv = e.target.result;
+        const arr = parseCSV(csv);
+        if(arr && arr.length){ dataset = arr; renderRows(dataset); flashRow(document.querySelector('tr'), 'Loaded CSV'); }
+        else alert('No usable items found in CSV. Expect columns: HSN (or code), Description, Rate.');
+      } else if(name.endsWith('.xlsx') || name.endsWith('.xls')){
+        // minimal approach: ask user to convert to CSV (can't ship heavy libs here). Try to parse if browser has built-in support — otherwise fallback:
+        alert('Excel files are not parsed in-browser in this lightweight app. Please save the official spreadsheet as CSV and upload that. (This avoids bundling large libraries in the single-file app.)');
+      } else {
+        alert('Unsupported file type. Upload CSV or JSON.');
+      }
+    } catch(err){
+      console.error(err);
+      alert('Failed to parse file: ' + err.message);
+    }
+  };
+  reader.readAsText(f);
+  // reset input so same file can be reselected later
+  ev.target.value = "";
+});
+
+function normalizeUploadedArray(arr){
+  if(!Array.isArray(arr)) return null;
+  return arr.map(obj=>{
+    const keys = Object.keys(obj).reduce((acc,k)=>{ acc[k.toLowerCase().trim()]=k; return acc; },{});
+    const hsnKey = keys['hsn'] || keys['hsn/sac'] || keys['code'] || keys['sac'] || keys['hsn code'] || keys['hsn/sac code'];
+    const descKey = keys['description'] || keys['desc'] || keys['item'] || keys['item description'];
+    const rateKey = keys['rate'] || keys['gst rate'] || keys['cgst'] || keys['sgst'];
+    return {
+      hsn: (hsnKey ? obj[hsnKey] : ''),
+      desc: (descKey ? obj[descKey] : JSON.stringify(obj).slice(0,80)),
+      rate: (rateKey ? obj[rateKey] : (obj['tax']||obj['gst']||'')),
+      notes: ''
+    };
+  });
+}
+
+function parseCSV(text){
+  // naive CSV parser (handles quoted commas)
+  const lines = [];
+  let cur = '', inQuotes=false, row=[];
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if(ch==='\"'){
+      const next = text[i+1];
+      if(inQuotes && next==='\"'){ cur += '\"'; i++; continue; }
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if(ch===',' && !inQuotes){ row.push(cur); cur=''; continue; }
+    if((ch==='\n' || ch==='\r') && !inQuotes){
+      if(cur !== '' || row.length) { row.push(cur); lines.push(row); row=[]; cur=''; }
+      // skip extra \r\n combos
+      if(ch==='\r' && text[i+1]==='\n') i++;
+      continue;
+    }
+    cur += ch;
+  }
+  if(cur !== '' || row.length) { row.push(cur); lines.push(row); }
+  if(lines.length===0) return [];
+  // header mapping
+  const header = lines[0].map(h=>h.trim().toLowerCase());
+  const hsnIdx = header.findIndex(h=>h.includes('hsn')||h.includes('sac')||h.includes('code'));
+  const descIdx = header.findIndex(h=>h.includes('desc')||h.includes('description')||h.includes('item'));
+  const rateIdx = header.findIndex(h=>h.includes('rate')||h.includes('gst'));
+  const out = [];
+  for(let r=1;r<lines.length;r++){
+    const rowData = lines[r];
+    if(rowData.length===1 && rowData[0].trim()==='') continue;
+    out.push({
+      hsn: (hsnIdx>=0? (rowData[hsnIdx]||'') : (rowData[0]||'')),
+      desc: (descIdx>=0? (rowData[descIdx]||'') : (rowData[1]||'')),
+      rate: (rateIdx>=0? (rowData[rateIdx]||'') : (rowData[2]||''))
+    });
+  }
+  return out;
+}
+
+// ---------- tiny UX helpers ----------
+function addGlobalKeyboard(){
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='/' && document.activeElement !== qInput){
+      e.preventDefault(); qInput.focus(); qInput.select();
+    }
+  });
+}
+addGlobalKeyboard();
+
+// ---------- end ----------
+</script>
+</body>
+</html>
