@@ -1,0 +1,211 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>💞 FLAMES Love Calculator 💞</title>
+<meta name="theme-color" content="#ff6f91" />
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAbFBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8R+wo7AAAAI3RSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyktxunqAAAAWklEQVQYV2NgQAX+AwMDBUMCgwEwEwJQ0EADgcRBAgxE9DJATKBoI3iO4lqACIgZkBDFRC8mOAaQnAtAFoA7+ZCPAHnUMqBrn8QEKUggQkUkoSxAQBVzQcpXY3ubAAAAAElFTkSuQmCC" />
+
+<!-- ✅ Inline Manifest for PWA -->
+<link rel="manifest" id="manifest-placeholder">
+
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    color: #fff;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 2rem;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { text-shadow: 0 0 10px #fff; }
+    to { text-shadow: 0 0 25px #ff6f91; }
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 1s ease;
+    z-index: 2;
+  }
+  input {
+    width: 85%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    text-align: center;
+    background: #fff;
+    color: #333;
+  }
+  button {
+    background: linear-gradient(135deg, #ff6f91, #ff9671);
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 5px 15px rgba(255, 111, 145, 0.4);
+  }
+  button:hover { transform: translateY(-3px); }
+  .result {
+    margin-top: 20px;
+    font-size: 26px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 15px #fff, 0 0 25px #ff3f6c;
+    min-height: 30px;
+  }
+  .heart {
+    position: fixed;
+    bottom: 10px;
+    color: #ff3f6c;
+    font-size: 24px;
+    animation: floatUp 3s linear forwards;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+  }
+  footer {
+    position: absolute;
+    bottom: 10px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<h1>💘 FLAMES Love Calculator 💘</h1>
+
+<div class="card">
+  <input type="text" id="name1" placeholder="Enter First Name 💫" />
+  <input type="text" id="name2" placeholder="Enter Second Name 🌸" />
+  <button onclick="startCalculation()">💖 Find Relationship 💖</button>
+
+  <div class="result" id="result"></div>
+  <button id="tryAgain" style="display:none" onclick="resetForm()">🔁 Try Again</button>
+</div>
+
+<footer>Made with 💕 by Ravi Varman and Amir</footer>
+
+<script>
+  // --- FLAMES Calculation Logic ---
+  function startCalculation() {
+    let name1 = document.getElementById("name1").value.trim().toLowerCase().replace(/\s+/g, "");
+    let name2 = document.getElementById("name2").value.trim().toLowerCase().replace(/\s+/g, "");
+    const result = document.getElementById("result");
+
+    if (!name1 || !name2) {
+      result.innerText = "Please enter both names!";
+      return;
+    }
+
+    for (let c of name1) {
+      if (name2.includes(c)) {
+        name1 = name1.replace(c, "");
+        name2 = name2.replace(c, "");
+      }
+    }
+
+    const count = name1.length + name2.length;
+    let flames = ["F","L","A","M","E","S"];
+    let index = 0;
+    while (flames.length > 1) {
+      index = (count % flames.length) - 1;
+      if (index >= 0) {
+        flames.splice(index,1);
+        flames = flames.slice(index).concat(flames.slice(0,index));
+      } else flames.pop();
+    }
+
+    const meaning = {
+      F:"Friends 👯‍♀️",
+      L:"Love 💖",
+      A:"Affection 💕",
+      M:"Marriage 💍",
+      E:"Enemy 💢",
+      S:"Sister 👧"
+    };
+
+    result.innerHTML = `✨ Result: <strong>${meaning[flames[0]]}</strong> ✨`;
+    document.getElementById("tryAgain").style.display = "inline-block";
+    createHearts();
+  }
+
+  function createHearts() {
+    for (let i = 0; i < 20; i++) {
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      heart.innerHTML = "💖";
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDuration = 2 + Math.random() * 2 + "s";
+      heart.style.fontSize = 16 + Math.random() * 28 + "px";
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 3000);
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("name1").value = "";
+    document.getElementById("name2").value = "";
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("tryAgain").style.display = "none";
+  }
+
+  // --- Inline Manifest + Service Worker Setup ---
+  const manifestData = {
+    "name": "FLAMES Love Calculator",
+    "short_name": "FLAMES",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffdde1",
+    "theme_color": "#ff6f91",
+    "icons": [{
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAbFBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8R+wo7AAAAI3RSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyktxunqAAAAWklEQVQYV2NgQAX+AwMDBUMCgwEwEwJQ0EADgcRBAgxE9DJATKBoI3iO4lqACIgZkBDFRC8mOAaQnAtAFoA7+ZCPAHnUMqBrn8QEKUggQkUkoSxAQBVzQcpXY3ubAAAAAElFTkSuQmCC",
+      "sizes": "192x192",
+      "type": "image/png"
+    }]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: "application/json"});
+  const manifestURL = URL.createObjectURL(manifestBlob);
+  document.querySelector("#manifest-placeholder").setAttribute("href", manifestURL);
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+      const CACHE_NAME = "flames-singlefile-cache-v1";
+      const urlsToCache = ["./"];
+      self.addEventListener("install", (e) => {
+        e.waitUntil(caches.open(CACHE_NAME).then((c)=>c.addAll(urlsToCache)));
+      });
+      self.addEventListener("fetch", (e) => {
+        e.respondWith(caches.match(e.request).then((r)=>r || fetch(e.request)));
+      });
+    `], {type:"text/javascript"})));
+  }
+</script>
+</body>
+</html>
