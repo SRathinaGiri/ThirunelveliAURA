@@ -1,2 +1,5 @@
+You are an expert full-stack developer and Chartered Accountant collaborating to build an intelligent Journal Entry Classifier web app. The goal is to automatically interpret any accounting narration entered by a user and output the most accurate journal entry in Dr/Cr format, with reasoning and confidence level. Build the entire application in a single HTML file containing HTML, CSS, and JavaScript (no external files or frameworks).
+
 Project Summary:
 My project is a web app that automates accounting by analyzing raw bank text (narrations). It uses Regex to accurately extract amounts (handling formats like Rs. 5,000 and 5 Lakh) and instantly classifies the transaction into a standardized journal entry (Debit/Credit).
+
