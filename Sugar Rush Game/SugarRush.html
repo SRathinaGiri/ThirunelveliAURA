@@ -2,155 +2,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sugar Crush - Match 3 Game</title>
+  <title>Sugar Rush - Match 3 Game</title>
   <style>
     body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: #fff7f7;
-      font-family: Arial, sans-serif;
+      justify-content: center;
+      background: #fff0f5;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
       margin: 0;
       padding: 20px;
+      min-height: 100vh;
     }
-    h1 { color: #ff3e6c; }
-    #score { font-size: 20px; margin-bottom: 10px; }
+    h1 {
+      color: #ff3e6c;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px #00000030;
+    }
+    .game-info {
+      display: flex;
+      justify-content: space-around;
+      width: 480px;
+      margin-bottom: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .info-box {
+      background: #ffffff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      box-shadow: 0 4px 8px #00000020;
+      color: #333;
+    }
     #board {
-      width: 400px;
-      height: 400px;
+      width: 480px;
+      height: 480px;
       display: flex;
       flex-wrap: wrap;
       background: #ffe3ec;
-      border: 5px solid #ff3e6c;
-      border-radius: 10px;
+      border: 8px solid #ff3e6c;
+      border-radius: 15px;
+      padding: 5px;
+      box-shadow: 0 10px 20px #00000030;
     }
     .candy {
-      width: 50px;
-      height: 50px;
-      border-radius: 8px;
-      margin: 2px;
+      width: 60px;
+      height: 60px;
+      box-sizing: border-box;
+      border-radius: 50%;
       cursor: pointer;
-      transition: transform 0.1s;
+      transition: transform 0.2s ease, background-image 0.2s;
+      background-size: cover;
     }
-    .candy:active { transform: scale(0.9); }
+    .candy:hover {
+      transform: scale(1.1);
+    }
+    #reset-button {
+        margin-top: 20px;
+        padding: 12px 25px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        background-color: #ff3e6c;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px #00000030;
+        transition: background-color 0.2s;
+    }
+    #reset-button:hover {
+        background-color: #e0325b;
+    }
   </style>
 </head>
 <body>
-
-<h1>🍭 Sugar Crush 🍬 By Monisha</h1>
-<div id="score">Score: 0</div>
-<div id="board"></div>
+  <h1>🍭 Sugar Crush 🍬</h1>
+  <div class="game-info">
+    <div class="info-box">Score: <span id="score">0</span></div>
+    <div class="info-box">Moves: <span id="moves">0</span></div>
+  </div>
+  <div id="board"></div>
+  <button id="reset-button">Reset Game</button>
 
 <script>
-  const board = document.getElementById('board');
-  const scoreDisplay = document.getElementById('score');
-  const width = 8;
-  const candies = [];
-  let score = 0;
+  document.addEventListener('DOMContentLoaded', () => {
+    const board = document.getElementById('board');
+    const scoreDisplay = document.getElementById('score');
+    const movesDisplay = document.getElementById('moves');
+    const resetButton = document.getElementById('reset-button');
+    const width = 8;
+    let squares = [];
+    let score = 0;
 
-  const candyColors = ['#ff3e6c', '#ffbf00', '#00d084', '#8e6eff', '#4dd2ff'];
+    const candyTypes = ['url("https://em-content.zobj.net/source/apple/354/red-apple_1f34e.png")', 'url("https://em-content.zobj.net/source/apple/354/blueberries_1fad0.png")', 'url("https://em-content.zobj.net/source/apple/354/grapes_1f347.png")', 'url("https://em-content.zobj.net/source/apple/354/orange_1f34a.png")', 'url("https://em-content.zobj.net/source/apple/354/pear_1f350.png")', 'url("https://em-content.zobj.net/source/apple/354/strawberry_1f353.png")'];
 
-  // Create board
-  function createBoard() {
-    for (let i = 0; i < width * width; i++) {
-      const candy = document.createElement('div');
-      candy.classList.add('candy');
-      candy.style.backgroundColor = getRandomCandy();
-      candy.setAttribute('draggable', true);
-      candy.setAttribute('data-id', i);
-      board.appendChild(candy);
-      candies.push(candy);
+    function createBoard() { /* ... same as before ... */ }
+    function addEventListeners() { /* ... same as before ... */ }
+    function initializeGame() { /* ... same as before ... */ }
+    
+    // --- (The functions below are copied for completeness but are unchanged) ---
+    function createBoard() { for (let i = 0; i < width * width; i++) { const square = document.createElement('div'); square.classList.add('candy'); square.setAttribute('draggable', true); square.setAttribute('id', i); let randomType = Math.floor(Math.random() * candyTypes.length); square.style.backgroundImage = candyTypes[randomType]; board.appendChild(square); squares.push(square); } }
+    function addEventListeners() { squares.forEach(square => square.addEventListener('dragstart', dragStart)); squares.forEach(square => square.addEventListener('dragend', dragEnd)); squares.forEach(square => square.addEventListener('dragover', dragOver)); squares.forEach(square => square.addEventListener('dragleave', dragLeave)); squares.forEach(square => square.addEventListener('drop', dragDrop)); }
+    function initializeGame() { createBoard(); addEventListeners(); updatePossibleMoves(); }
+    initializeGame();
+    let typeBeingDragged; let typeBeingReplaced; let squareIdBeingDragged; let squareIdBeingReplaced;
+    function dragStart() { typeBeingDragged = this.style.backgroundImage; squareIdBeingDragged = parseInt(this.id); }
+    function dragOver(e) { e.preventDefault(); }
+    function dragLeave() { this.style.border = ''; }
+    function dragDrop() { typeBeingReplaced = this.style.backgroundImage; squareIdBeingReplaced = parseInt(this.id); squares[squareIdBeingDragged].style.backgroundImage = typeBeingReplaced; this.style.backgroundImage = typeBeingDragged; }
+    function dragEnd() { let validMoves = [squareIdBeingDragged - 1, squareIdBeingDragged + 1, squareIdBeingDragged - width, squareIdBeingDragged + width]; let isValidMove = validMoves.includes(squareIdBeingReplaced); if (squareIdBeingReplaced && isValidMove) { let isMatch = checkForMatches(); if (!isMatch) { squares[squareIdBeingDragged].style.backgroundImage = typeBeingDragged; squares[squareIdBeingReplaced].style.backgroundImage = typeBeingReplaced; } else { setTimeout(updatePossibleMoves, 500); } } else if (squareIdBeingReplaced && !isValidMove) { squares[squareIdBeingDragged].style.backgroundImage = typeBeingDragged; squares[squareIdBeingReplaced].style.backgroundImage = typeBeingReplaced; } squareIdBeingReplaced = null; }
+    function moveCandiesDown() { for (let i = 0; i < 55; i++) { if (squares[i + width].style.backgroundImage === '') { squares[i + width].style.backgroundImage = squares[i].style.backgroundImage; squares[i].style.backgroundImage = ''; } } }
+    function refillTopRow() { for (let i = 0; i < width; i++) { if (squares[i].style.backgroundImage === '') { let randomType = Math.floor(Math.random() * candyTypes.length); squares[i].style.backgroundImage = candyTypes[randomType]; } } }
+    function clearMatchAndUpdateScore(match, points) { match.forEach(index => { squares[index].style.backgroundImage = ''; }); score += points; scoreDisplay.textContent = score; }
+    function checkForMatches() { let matchFound = checkRowForMatch(5) || checkColumnForMatch(5) || checkRowForMatch(4) || checkColumnForMatch(4) || checkRowForMatch(3) || checkColumnForMatch(3); return matchFound; }
+    function checkRowForMatch(matchSize) { for (let i = 0; i < width * width; i++) { let rowOfCandies = []; for (let j = 0; j < matchSize; j++) { rowOfCandies.push(i + j); } let notValid = []; for (let k = 1; k < matchSize; k++) { for (let l = width - k + 1; l < width * width; l += width) { notValid.push(l); } } if (notValid.includes(i)) continue; const decidedType = squares[i].style.backgroundImage; const isBlank = decidedType === ''; if (!isBlank && rowOfCandies.every(index => squares[index] && squares[index].style.backgroundImage === decidedType)) { clearMatchAndUpdateScore(rowOfCandies, matchSize * 10); return true; } } return false; }
+    function checkColumnForMatch(matchSize) { for (let i = 0; i < width * (width - matchSize + 1); i++) { let columnOfCandies = []; for (let j = 0; j < matchSize; j++) { columnOfCandies.push(i + j * width); } const decidedType = squares[i].style.backgroundImage; const isBlank = decidedType === ''; if (!isBlank && columnOfCandies.every(index => squares[index] && squares[index].style.backgroundImage === decidedType)) { clearMatchAndUpdateScore(columnOfCandies, matchSize * 10); return true; } } return false; }
+
+    
+    // --- BUG FIX: Rewritten Functions to Calculate Possible Moves Correctly ---
+
+    function updatePossibleMoves() {
+        let possibleMoves = new Set(); // Use a Set to automatically handle duplicates
+        for (let i = 0; i < width * width; i++) {
+            // Check horizontal swap
+            if ((i + 1) % width !== 0) { // Ensure not on the right edge
+                if (simulateswapAndCheck(i, i + 1)) {
+                    possibleMoves.add([i, i + 1].sort().join('-'));
+                }
+            }
+            // Check vertical swap
+            if (i < width * (width - 1)) { // Ensure not in the bottom row
+                if (simulateswapAndCheck(i, i + width)) {
+                    possibleMoves.add([i, i + width].sort().join('-'));
+                }
+            }
+        }
+        movesDisplay.textContent = possibleMoves.size;
     }
-  }
 
-  function getRandomCandy() {
-    return candyColors[Math.floor(Math.random() * candyColors.length)];
-  }
+    function simulateswapAndCheck(id1, id2) {
+        // Temporarily swap the types in the array
+        [squares[id1].style.backgroundImage, squares[id2].style.backgroundImage] = [squares[id2].style.backgroundImage, squares[id1].style.backgroundImage];
 
-  // Drag and Swap
-  let colorBeingDragged;
-  let colorBeingReplaced;
-  let squareIdDragged;
-  let squareIdReplaced;
+        // Check for a match ONLY around the swapped pieces
+        const createsMatch = checkForMatchAt(id1) || checkForMatchAt(id2);
 
-  candies.forEach(candy => {
-    candy.addEventListener('dragstart', dragStart);
-    candy.addEventListener('dragover', dragOver);
-    candy.addEventListener('drop', dragDrop);
-    candy.addEventListener('dragend', dragEnd);
+        // IMPORTANT: Swap them back immediately to restore the board state
+        [squares[id1].style.backgroundImage, squares[id2].style.backgroundImage] = [squares[id2].style.backgroundImage, squares[id1].style.backgroundImage];
+
+        return createsMatch;
+    }
+
+    /**
+     * Checks if the candy at a specific index is part of a 3+ match.
+     * This is a targeted check, unlike the old hasMatchOnBoard().
+     */
+    function checkForMatchAt(i) {
+        const type = squares[i].style.backgroundImage;
+        if (type === '') return false;
+        
+        // Check horizontal match
+        const row = Math.floor(i / width);
+        // Check for [i-2, i-1, i], [i-1, i, i+1], and [i, i+1, i+2]
+        for (let offset = -2; offset <= 0; offset++) {
+            const start = i + offset;
+            if (Math.floor(start / width) === row && start >= 0 && start + 2 < width*width && Math.floor((start+2)/width) === row) {
+                if (squares[start].style.backgroundImage === type &&
+                    squares[start+1].style.backgroundImage === type &&
+                    squares[start+2].style.backgroundImage === type) {
+                    return true;
+                }
+            }
+        }
+
+        // Check vertical match
+        for (let offset = -2; offset <= 0; offset++) {
+            const start = i + (offset * width);
+            if (start >= 0 && start + (2 * width) < width * width) {
+                if (squares[start].style.backgroundImage === type &&
+                    squares[start + width].style.backgroundImage === type &&
+                    squares[start + (2 * width)].style.backgroundImage === type) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    // --- Reset Game Functionality (Unchanged) ---
+    resetButton.addEventListener('click', () => { board.innerHTML = ''; squares = []; score = 0; scoreDisplay.textContent = score; initializeGame(); });
+
+    // --- Main Game Loop (Unchanged) ---
+    window.setInterval(function() { moveCandiesDown(); refillTopRow(); checkForMatches(); }, 100);
   });
-
-  function dragStart() {
-    colorBeingDragged = this.style.backgroundColor;
-    squareIdDragged = parseInt(this.getAttribute('data-id'));
-  }
-
-  function dragOver(e) {
-    e.preventDefault();
-  }
-
-  function dragDrop() {
-    colorBeingReplaced = this.style.backgroundColor;
-    squareIdReplaced = parseInt(this.getAttribute('data-id'));
-    this.style.backgroundColor = colorBeingDragged;
-    candies[squareIdDragged].style.backgroundColor = colorBeingReplaced;
-  }
-
-  function dragEnd() {
-    const validMoves = [
-      squareIdDragged - 1,
-      squareIdDragged + 1,
-      squareIdDragged - width,
-      squareIdDragged + width
-    ];
-    if (!validMoves.includes(squareIdReplaced)) {
-      candies[squareIdDragged].style.backgroundColor = colorBeingDragged;
-      candies[squareIdReplaced].style.backgroundColor = colorBeingReplaced;
-    } else {
-      setTimeout(checkMatches, 100);
-    }
-  }
-
-  // Match Checking
-  function checkMatches() {
-    // Row Match
-    for (let i = 0; i < 64; i++) {
-      const row = [i, i+1, i+2];
-      if (row.every(idx => candies[idx] && candies[idx].style.backgroundColor === candies[i].style.backgroundColor)) {
-        row.forEach(idx => candies[idx].style.backgroundColor = '');
-        score += 30;
-        scoreDisplay.textContent = 'Score: ' + score;
-      }
-    }
-
-    // Column Match
-    for (let i = 0; i < 48; i++) {
-      const col = [i, i+8, i+16];
-      if (col.every(idx => candies[idx] && candies[idx].style.backgroundColor === candies[i].style.backgroundColor)) {
-        col.forEach(idx => candies[idx].style.backgroundColor = '');
-        score += 30;
-        scoreDisplay.textContent = 'Score: ' + score;
-      }
-    }
-
-    dropCandies();
-  }
-
-  function dropCandies() {
-    for (let i = 0; i < 64 - width; i++) {
-      if (candies[i + width].style.backgroundColor === '') {
-        candies[i + width].style.backgroundColor = candies[i].style.backgroundColor;
-        candies[i].style.backgroundColor = '';
-      }
-      if (i < width && candies[i].style.backgroundColor === '') {
-        candies[i].style.backgroundColor = getRandomCandy();
-      }
-    }
-  }
-
-  createBoard();
-  setInterval(checkMatches, 200);
 </script>
-
 </body>
 </html>
