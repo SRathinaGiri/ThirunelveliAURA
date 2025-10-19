@@ -1,1 +1,6 @@
-Finance Tracker Prompt
+create a web app using all in one file (HTML + JS + CSS ) We have to get the input as salary / available salary and the expenses and incomes of the month he tracker needs to have the following calculated metrics/summaries as output:
+Net Income: Total Income minus Total Expenses for the month.
+Budgeting: A column for the Planned Budget next to the Actual Spend for each expense category.
+Progress: A summary section showing the Remaining Budget for each category. AND also a note to keep with the budget. add chart visualization as well as a tag 
+saying designed
+ by Ananda Varshini
